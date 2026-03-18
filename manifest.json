@@ -1,0 +1,28 @@
+{
+  "name": "LAYA — Rhythm Sequencer",
+  "short_name": "LAYA",
+  "description": "Futuristic rhythm sequencer with Indian and western percussion. 8 tracks, real-time synthesis, swing, patterns.",
+  "start_url": "./laya.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d0c0a",
+  "theme_color": "#0d0c0a",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    {
+      "src": "../images/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../images/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
