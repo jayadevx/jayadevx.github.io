@@ -43,6 +43,29 @@
 
     <!--Google Webfonts-->
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap' rel='stylesheet'>
+    <style>
+        /* ── Futuristic accent tweaks ── */
+        #apps a { color: inherit; }
+        #apps .sb-app-card div { box-sizing: border-box; }
+
+        /* Subtle glowing nav link for Apps */
+        #nav-main a[href="#apps"] {
+            color: #009afa !important;
+            position: relative;
+        }
+        #nav-main a[href="#apps"]::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0; right: 0;
+            height: 1px;
+            background: #009afa;
+            opacity: 0.5;
+        }
+
+        /* section scroll offset fix */
+        #apps { scroll-margin-top: 80px; }
+    </style>
 </head>
 <body>
 
@@ -118,6 +141,9 @@ s0.parentNode.insertBefore(s1,s0);
                             <li>
                                 <a href="#gallery">Use Cases</a>
                             </li>
+                            <li>
+                                <a href="#apps">Apps</a>
+                            </li>
                             <!--<li>
                                 <a href="#services">Services</a>
                             </li>
@@ -148,7 +174,7 @@ s0.parentNode.insertBefore(s1,s0);
 
                 <div class="section-heading">
                     <h1 style="color:#009afa;">Start your Gen-AI journey</h1>
-                    <h2 style="color:black;">SingularityBlue is focused on Gen-AI Platform Engineering for Finance. Featuring its simple yet powerful real-time plug and play Gen-AI platform that enables faster AI augmentation. <BR><BR> Contact us at <strong><b>contact@singularityblue.com</b></strong></h2>
+                    <h2 style="color:black;">SingularityBlue is focused on Gen-AI Platform Engineering for Finance. Featuring its simple yet powerful real-time plug and play Gen-AI platform that enables faster AI augmentation. <BR><BR> Contact us at <strong><b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="670408091306041327140e0900120b06150e131e050b12024904080a">[email&#160;protected]</a></b></strong></h2>
                 </div>
 
                 <!--Call to Action-->
@@ -296,7 +322,7 @@ s0.parentNode.insertBefore(s1,s0);
                         Thoughts Beyond the Code! Delve into the minds shaping the AI landscape. From decoding the intricacies of generative AI to exploring the untapped potential of LLMS, and envisioning the future through the lens of computer vision.
                     </p>
                     <!-- Just replace the Video ID "UYJ5IjBRlW8" with the ID of your video on YouTube (Found within the URL) -->
-                    <a href="mailto:contact@singularityblue.com" class="button">CLICK TO CONTACT NOW</a>
+                    <a href="/cdn-cgi/l/email-protection#96f5f9f8e2f7f5e2d6e5fff8f1e3faf7e4ffe2eff4fae3f3b8f5f9fb" class="button">CLICK TO CONTACT NOW</a>
                 </div>
                 <!--End Content Right Side-->
 
@@ -315,6 +341,178 @@ s0.parentNode.insertBefore(s1,s0);
     <!--End Main Content Area-->
 
 
+    <!-- ══════════════════════════════════════
+         APPS SECTION
+    ══════════════════════════════════════ -->
+    <section id="apps" class="scrollto clearfix" style="
+        background: #07080d;
+        padding: 80px 0 90px;
+        position: relative;
+        overflow: hidden;
+    ">
+
+        <!-- grid lines background -->
+        <div style="
+            position:absolute;inset:0;
+            background-image:
+                linear-gradient(rgba(0,154,250,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,154,250,0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events:none;
+        "></div>
+
+        <!-- radial glow -->
+        <div style="
+            position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+            width:700px;height:400px;
+            background:radial-gradient(ellipse, rgba(0,154,250,0.07) 0%, transparent 70%);
+            pointer-events:none;
+        "></div>
+
+        <div class="row clearfix" style="position:relative;">
+
+            <!-- Section heading -->
+            <div class="col-1 text-center" style="margin-bottom:48px;">
+                <p style="
+                    font-family:'DM Mono',monospace;
+                    font-size:10px;letter-spacing:0.28em;
+                    color:#009afa;text-transform:uppercase;
+                    margin-bottom:10px;
+                ">— Tools &amp; Experiments —</p>
+                <h2 style="
+                    font-family:'Open Sans',sans-serif;
+                    font-size:36px;font-weight:800;
+                    color:#f0f4ff;
+                    letter-spacing:-0.5px;
+                    margin:0 0 14px;
+                ">Apps</h2>
+                <p style="
+                    font-size:15px;color:#6a7a9a;
+                    max-width:520px;margin:0 auto;
+                    line-height:1.7;
+                ">Side projects, experiments and tools built at SingularityBlue. Free to use.</p>
+            </div>
+
+            <!-- App cards -->
+            <div class="col-1" style="
+                display:flex;
+                flex-wrap:wrap;
+                gap:24px;
+                justify-content:center;
+                padding:0 24px;
+            ">
+
+                <!-- LAYA card -->
+                <a href="apps/laya.html" target="_blank" style="text-decoration:none;" class="sb-app-card">
+                    <div style="
+                        background:#0d0f17;
+                        border:1px solid rgba(0,154,250,0.18);
+                        border-radius:14px;
+                        padding:28px 28px 24px;
+                        width:280px;
+                        position:relative;
+                        overflow:hidden;
+                        transition:transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+                        cursor:pointer;
+                    " onmouseenter="
+                        this.style.transform='translateY(-4px)';
+                        this.style.borderColor='rgba(0,154,250,0.55)';
+                        this.style.boxShadow='0 20px 50px rgba(0,154,250,0.15)';
+                    " onmouseleave="
+                        this.style.transform='translateY(0)';
+                        this.style.borderColor='rgba(0,154,250,0.18)';
+                        this.style.boxShadow='none';
+                    ">
+                        <!-- corner glow -->
+                        <div style="
+                            position:absolute;top:-40px;right:-40px;
+                            width:130px;height:130px;
+                            background:radial-gradient(circle, rgba(0,154,250,0.12) 0%, transparent 70%);
+                            pointer-events:none;
+                        "></div>
+
+                        <!-- icon + name row -->
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+                            <div style="
+                                width:44px;height:44px;
+                                border-radius:10px;
+                                background:#0d0c0a;
+                                border:1px solid rgba(0,154,250,0.25);
+                                display:flex;align-items:center;justify-content:center;
+                                flex-shrink:0;
+                            ">
+                                <svg width="26" height="26" viewBox="0 0 752 574" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <ellipse cx="376" cy="112" rx="300" ry="78" stroke="#009afa" stroke-width="22" fill="none"/>
+                                  <path d="M120 155 Q210 420 290 440" stroke="#009afa" stroke-width="22" fill="none"/>
+                                  <path d="M632 155 Q542 420 462 440" stroke="#009afa" stroke-width="22" fill="none"/>
+                                  <ellipse cx="376" cy="440" rx="90" ry="34" stroke="#009afa" stroke-width="20" fill="none"/>
+                                  <path d="M300 462 Q330 520 376 544 Q422 520 452 462" stroke="#009afa" stroke-width="20" fill="none"/>
+                                  <ellipse cx="376" cy="490" rx="40" ry="16" stroke="#009afa" stroke-width="16" fill="none"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div style="
+                                    font-family:'DM Mono',monospace;
+                                    font-size:20px;font-weight:500;
+                                    color:#f0f4ff;letter-spacing:-0.3px;
+                                    line-height:1;
+                                ">LA<span style="font-weight:300;color:#009afa;">YA</span></div>
+                                <div style="
+                                    font-family:'DM Mono',monospace;
+                                    font-size:7.5px;letter-spacing:0.18em;
+                                    color:#009afa;text-transform:uppercase;
+                                    margin-top:3px;
+                                ">rhythm sequencer</div>
+                            </div>
+                        </div>
+
+                        <!-- description -->
+                        <p style="
+                            font-size:13px;color:#5a6a8a;
+                            line-height:1.65;margin:0 0 18px;
+                        ">Browser-based drum sequencer with Indian &amp; western percussion. 8 tracks, real-time synthesis, swing, patterns — no install needed.</p>
+
+                        <!-- tags -->
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
+                            <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;padding:3px 8px;border-radius:3px;background:rgba(0,154,250,0.08);border:1px solid rgba(0,154,250,0.2);color:#009afa;text-transform:uppercase;">PWA</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;padding:3px 8px;border-radius:3px;background:rgba(0,154,250,0.08);border:1px solid rgba(0,154,250,0.2);color:#009afa;text-transform:uppercase;">Audio</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;padding:3px 8px;border-radius:3px;background:rgba(0,154,250,0.08);border:1px solid rgba(0,154,250,0.2);color:#009afa;text-transform:uppercase;">Indian Music</span>
+                        </div>
+
+                        <!-- CTA row -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;color:#2a3a5a;text-transform:uppercase;">Free</span>
+                            <span style="
+                                font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;
+                                color:#009afa;text-transform:uppercase;
+                                display:flex;align-items:center;gap:5px;
+                            ">Open App <span style="font-size:12px;">→</span></span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Placeholder card — "coming soon" -->
+                <div style="
+                    background:#0a0c12;
+                    border:1px dashed rgba(255,255,255,0.06);
+                    border-radius:14px;
+                    padding:28px;
+                    width:280px;
+                    display:flex;flex-direction:column;
+                    align-items:center;justify-content:center;
+                    gap:10px;
+                    min-height:220px;
+                ">
+                    <div style="font-size:24px;color:#1e2530;">⊕</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;color:#2a3545;text-transform:uppercase;">More coming soon</div>
+                </div>
+
+            </div><!-- end cards -->
+
+        </div>
+    </section>
+    <!-- ══════ End Apps Section ══════ -->
+
     <!--Footer-->
     <footer id="landing-footer" class="clearfix">
         <div class="row clearfix">
@@ -331,19 +529,10 @@ s0.parentNode.insertBefore(s1,s0);
 </div>
 
 <!-- Include JavaScript resources -->
-<script src="js/jquery.1.8.3.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/jquery.1.8.3.min.js"></script>
 <script src="js/wow.min.js"></script>
 <script src="js/featherlight.min.js"></script>
 <script src="js/featherlight.gallery.min.js"></script>
 <script src="js/jquery.enllax.min.js"></script>
 <script src="js/jquery.scrollUp.min.js"></script>
-<script src="js/jquery.easing.min.js"></script>
-<script src="js/jquery.stickyNavbar.min.js"></script>
-<script src="js/jquery.waypoints.min.js"></script>
-<script src="js/images-loaded.min.js"></script>
-<script src="js/lightbox.min.js"></script>
-<script src="js/site.js"></script>
-
-
-</body>
-</html>
+<script src="js/jqu
