@@ -4,12 +4,27 @@
     <meta charset="UTF-8">
 
     <!--Page Title-->
-    <title>Singularity Blue - AI for Banking, Finance, Manufacturing, Fintech</title>
+    <title>SingularityBlue - Generative AI for Banking, Finance, Manufacturing, Fintech</title>
 
     <!--Meta Keywords and Description-->
     <meta name="keywords" content="Generative AI, AI and Digital transformation, AI for Fintech, AI for Manufacturing, AI for Finance, AI for Banking">
-    <meta name="description" content="Helping you with AI powered business. AI based analytics, chat bot, RAG and Computer Vision, For Fintech, Banking and Finance">
+    <meta name="description" content="Helping you with AI powered business. AI based analytics, chat bot, RAG and Computer Vision, For Fintech, Banking and Manufacturing">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+    
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.singularityblue.com/">
+    <meta property="og:title" content="Singularity Blue - Generative AI for Banking, Finance, & Manufacturing">
+
+    <meta property="og:type" content="website">
+
+    <meta property="og:url" content="https://www.singularityblue.com/">
+
+    <meta property="og:image" content="https://www.singularityblue.com/images/social-preview.jpg">
+
+    <meta property="og:description" content="Helping businesses with AI-powered analytics, chatbots, RAG, MCP and Computer Vision for Fintech, Banking, and Manufacturing.">
+
+    <meta property="og:site_name" content="SingularityBlue"> 
+    
 
     <!--Favicon-->
     <link rel="shortcut icon" href="images/favicon.png" title="Favicon"/>
@@ -31,7 +46,7 @@
 </head>
 <body>
 
-<!--Start of Tawk.to Script-->
+<!--Start of Tawk.to Script
 <script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){
@@ -43,7 +58,7 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
-<!--End of Tawk.to Script-->
+--End of Tawk.to Script-->
 
 <!-- Preloader -->
 <div id="preloader">
@@ -77,7 +92,7 @@ s0.parentNode.insertBefore(s1,s0);
                         <!--End of Banner Logo-->
 
                         <!--The Logo that is shown on the sticky Navigation Bar-->
-                        <img src="images/logo-2.png" id="navigation-logo" alt="Landing Page"/>
+                        <img src="images/logo-nav.png" id="navigation-logo" alt="Landing Page"/>
                         <!--End of Navigation Logo-->
 
                     </div>
@@ -98,12 +113,12 @@ s0.parentNode.insertBefore(s1,s0);
                                 <a href="#banner">Home</a>
                             </li>
                             <li>
-                                <a href="#about">About</a>
+                                <a href="#about">Features</a>
                             </li>
                             <li>
-                                <a href="#gallery">Gallery</a>
+                                <a href="#gallery">Use Cases</a>
                             </li>
-                            <li>
+                            <!--<li>
                                 <a href="#services">Services</a>
                             </li>
                             <li>
@@ -114,7 +129,7 @@ s0.parentNode.insertBefore(s1,s0);
                             </li>
                             <li>
                                 <a href="#pricing">Pricing</a>
-                            </li>
+                            </li>-->
                         </ul>
                     </nav>
                     <!--End of Main Navigation-->
@@ -132,8 +147,8 @@ s0.parentNode.insertBefore(s1,s0);
             <div class="col-38">
 
                 <div class="section-heading">
-                    <h1>AIdea! FOR YOUR BUSINESS.</h1>
-                    <h2 style="color:black;">Singularity Blue is a startup focusing on democratizing the AI journey for customers. Featuring its simple yet powerful plug and play AI interfaces. <BR><BR> Contact us at contact@singularity.blue</h2>
+                    <h1 style="color:#009afa;">Start your Gen-AI journey</h1>
+                    <h2 style="color:black;">SingularityBlue is focused on Gen-AI Platform Engineering for Finance. Featuring its simple yet powerful real-time plug and play Gen-AI platform that enables faster AI augmentation. <BR><BR> Contact us at <strong><b>contact@singularityblue.com</b></strong></h2>
                 </div>
 
                 <!--Call to Action-->
@@ -156,8 +171,8 @@ s0.parentNode.insertBefore(s1,s0);
                 <div class="col-3">
                     <div class="section-heading">
                         <h3>AI REVOLUTION</h3>
-                        <h2 class="section-title">AI Unleashed, Your Way!</h2>
-                        <p class="section-subtitle" >Dive into a realm of tailored AI solutions. Elevate your customer support with empathetic AI interactions, supercharge search capabilities for instant insights and harness the visual power of computer vision for unprecedented use cases. Your business, redefined.</p>
+                        <h2 class="section-title" style="color:#009afa;">Intelligence at the Core of Transformation</h2>
+                        <p class="section-subtitle" >Empower your enterprise with AI systems built to think, adapt, and deliver measurable outcomes. At SingularityBlue, we integrate intelligence into every layer of your operations—turning complexity into clarity and data into direction.</p>
                     </div>
 
                 </div>
@@ -186,8 +201,8 @@ s0.parentNode.insertBefore(s1,s0);
                         </div>
                         <!--Icon Block Description-->
                         <div class="icon-block-description">
-                            <h4>Accelerating AI Adoption</h4>
-                            <p>Time is of the essence—supercharge your AI integration!. We specialize in expediting the adoption curve, ensuring your business stays ahead.</p>
+                            <h4>The Future of AI is Enterprise-Ready</h4>
+                            <p>Designed for scalability, security, and precision—our AI platforms enable enterprises to move beyond experimentation to tangible value. Accelerate innovation with confidence through trusted, compliant, and performance-driven intelligence.</p>
                         </div>
                     </div>
                     <!--End of Icon Block-->
@@ -200,8 +215,8 @@ s0.parentNode.insertBefore(s1,s0);
                         </div>
                         <!--Icon Block Description-->
                         <div class="icon-block-description">
-                            <h4>Generative AI Marvels</h4>
-                            <p>Beyond imagination lies creation. Dive into the world of generative AI, where innovation knows no bounds. From content generation to idea inception, witness the magic of AI that evolves and adapts to meet your business needs.</p>
+                            <h4>Context. Insight. Action.</h4>
+                            <p>AI achieves its full potential when powered by context. Our Model Context Protocol (MCP) unifies data silos, transforming fragmented information into actionable insights that drive enterprise-wide automation and intelligence.</p>
                         </div>
                     </div>
                     <!--End of Icon Block-->
@@ -214,8 +229,8 @@ s0.parentNode.insertBefore(s1,s0);
                         </div>
                         <!--Icon Block Description-->
                         <div class="icon-block-description">
-                            <h4>LLMS: Lightning-Fast Mastery</h4>
-                            <p>Revolutionize your data landscape with our Lightning-Like Management System (LLMS). Experience the speed of thought as we redefine data management, processing vast amounts of information at unprecedented speeds.</p>
+                            <h4>AI Built for Business, Designed for Impact</h4>
+                            <p>Whether optimizing workflows or reinventing industries, SingularityBlue helps enterprises move faster, smarter, and further. We deliver AI that scales with your vision and evolves with your ambition.</p>
                         </div>
                     </div>
                     <!--End of Icon Block-->
@@ -234,17 +249,17 @@ s0.parentNode.insertBefore(s1,s0);
                  data-featherlight-filter="a">
 
                 <a href="images/gallery-images/gallery-image-1.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="0.1s"><img src="images/gallery-images/gallery-image-1.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="0.1s"><img src="images/gallery-images/gallery-image-1.jpg" alt="AI Powered customer chat bot responding to customer"/></a>
                 <a href="images/gallery-images/gallery-image-2.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="0.3s"><img src="images/gallery-images/gallery-image-2.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="0.3s"><img src="images/gallery-images/gallery-image-2.jpg" alt="An AI co-pilot assisting an employee to work fast and efficient"/></a>
                 <a href="images/gallery-images/gallery-image-3.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="0.5s"><img src="images/gallery-images/gallery-image-3.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="0.5s"><img src="images/gallery-images/gallery-image-3.jpg" alt="Information security with AI discovery analysis and attack prevention"/></a>
                 <a href="images/gallery-images/gallery-image-4.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="1.1s"><img src="images/gallery-images/gallery-image-4.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="1.1s"><img src="images/gallery-images/gallery-image-4.jpg" alt="A financial customer support chat bot responding to customer queries in multiple languages"/></a>
                 <a href="images/gallery-images/gallery-image-5.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="0.9s"><img src="images/gallery-images/gallery-image-5.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="0.9s"><img src="images/gallery-images/gallery-image-5.jpg" alt="AI helping to search within a large document repository based on context and semantics"/></a>
                 <a href="images/gallery-images/gallery-image-6.jpg" data-featherlight="image" class="col-3 wow fadeIn"
-                   data-wow-delay="0.7s"><img src="images/gallery-images/gallery-image-6.jpg" alt="Landing Page"/></a>
+                   data-wow-delay="0.7s"><img src="images/gallery-images/gallery-image-6.jpg" alt="AI providing insights for process optimisation in finance in the areas of Operations, HR, Finance, Legal"/></a>
 
         </aside>
         <!--End of Gallery-->
@@ -272,7 +287,7 @@ s0.parentNode.insertBefore(s1,s0);
                 <div class="col-3">
                     <div class="section-heading">
                         <h3>AIDEA!</h3>
-                        <h2 class="section-title">AI Unleashed, Your Way!</h2>
+                        <h2 class="section-title" style="color:#009afa;">AI Unleashed, Your Way!</h2>
                         <p class="section-subtitle">Dive into a realm of tailored AI solutions. Elevate your customer support with empathetic AI interactions, supercharge search capabilities for instant insights, and harness the visual power of computer vision for unprecedented use cases. Your business, redefined!</p>
                     </div>
                     <p>Witness AI Evolution in Action! Explore success stories of businesses turbocharged by our AI expertise. From transforming customer experiences with AI-driven support to revolutionizing workflows with LLMS speed and unlocking new vistas with Computer Vision—see how AI is reshaping industries.
@@ -281,7 +296,7 @@ s0.parentNode.insertBefore(s1,s0);
                         Thoughts Beyond the Code! Delve into the minds shaping the AI landscape. From decoding the intricacies of generative AI to exploring the untapped potential of LLMS, and envisioning the future through the lens of computer vision.
                     </p>
                     <!-- Just replace the Video ID "UYJ5IjBRlW8" with the ID of your video on YouTube (Found within the URL) -->
-                    <a href="mailto:jay@singularity.blue" class="button">CLICK TO CONTACT NOW</a>
+                    <a href="mailto:contact@singularityblue.com" class="button">CLICK TO CONTACT NOW</a>
                 </div>
                 <!--End Content Right Side-->
 
@@ -304,7 +319,8 @@ s0.parentNode.insertBefore(s1,s0);
     <footer id="landing-footer" class="clearfix">
         <div class="row clearfix">
 
-            <p id="copyright" class="col-2">[c] 2023 by Singularity Blue</a></p>
+            <p id="copyright" class="col-2">[c] 2026 by SingularityBlue</a></p>
+            <p id="copyright" class="col-2">SingularityBlue (OPC) Pvt. Ltd., Kakkanad, Kochi, India - 682037</a></p>
 
             <!--Social Icons in Footer-->
             <!--End of Social Icons in Footer-->
