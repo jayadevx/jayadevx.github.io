@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memos Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Geist',sans-serif;background:#f7f6f4;color:#1c1917;overflow:hidden}
+:root{
+  --sidebar-w:200px;
+  --accent:#e07b39;
+  --accent-bg:rgba(224,123,57,.12);
+  --topbar:54px;
+  --row-h:220px; /* target row height */
+}
+
+/* ── SHELL ── */
+.shell{display:flex;height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:#fff;border-right:1px solid #ebe8e3;
+  display:flex;flex-direction:column;padding:20px 12px 16px;gap:2px;
+  overflow-y:auto;
+}
+.logo{display:flex;align-items:center;gap:8px;padding:4px 10px 18px;border-bottom:1px solid #ebe8e3;margin-bottom:8px}
+.logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#c2410c);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:14px;height:14px;fill:#fff}
+.logo-text{font-size:15px;font-weight:600;color:#1c1917;letter-spacing:-.3px}
+.nav-label{font-size:10px;font-weight:500;color:#b5afa8;letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 4px;margin-top:6px}
+.nav{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;color:#78716c;font-family:'Geist',sans-serif;font-size:13px;font-weight:500;transition:all .14s}
+.nav:hover{background:#f5f3f0;color:#1c1917}
+.nav.on{background:#fef3eb;color:#1c1917}
+.nav.on .ni{color:var(--accent)}
+.ni{display:flex;flex-shrink:0;color:#c4bdb5;transition:color .14s}
+.nav:hover .ni{color:#78716c}
+.nav.on .ni{color:var(--accent)}
+.nbadge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid #ebe8e3;display:flex;flex-direction:column;gap:2px}
+.stat-row{display:flex;justify-content:space-between;padding:3px 10px;font-size:11px;color:#c4bdb5}
+.stat-row span:last-child{color:#78716c;font-weight:500}
+#tagNav{display:flex;flex-direction:column;gap:2px}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+
+/* Topbar */
+.topbar{
+  height:var(--topbar);flex-shrink:0;
+  background:rgba(247,246,244,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid #ebe8e3;
+  display:flex;align-items:center;padding:0 20px;gap:12px;
+}
+.sw{flex:1;max-width:380px;position:relative}
+.si{width:100%;padding:8px 14px 8px 34px;background:#f0ede9;border:1.5px solid #ebe8e3;border-radius:100px;font-family:'Geist',sans-serif;font-size:13px;color:#1c1917;outline:none;transition:all .18s}
+.si:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.si::placeholder{color:#b5afa8}
+.si-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#b5afa8;display:flex;pointer-events:none}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.ib{width:34px;height:34px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#a8a29e;transition:all .15s}
+.ib:hover{background:#f0ede9;color:#1c1917}
+.ib.on{color:var(--accent);background:var(--accent-bg)}
+.row-h-ctrl{display:flex;align-items:center;gap:6px;font-size:11px;color:#a8a29e}
+.row-h-ctrl input[type=range]{width:72px;accent-color:var(--accent)}
+
+/* ── PHOTO FEED ── */
+.feed{
+  flex:1;overflow-y:auto;padding:0;
+  /* Custom scrollbar */
+  scrollbar-width:thin;scrollbar-color:#e0dbd4 transparent;
+}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-track{background:transparent}
+.feed::-webkit-scrollbar-thumb{background:#e0dbd4;border-radius:3px}
+
+/* 
+  Google Photos layout:
+  date-groups wrap in a flex container.
+  Each group is inline: date chip + photo strip.
+  Photo strip = flex row at fixed height, images scale by aspect ratio.
+  Groups wrap to next line when there's no room.
+*/
+.groups-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  align-content:flex-start;
+  padding:16px 16px 40px;
+  gap:16px 20px;
+}
+
+/* Each date group — takes full available width */
+.dg{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  width:100%;
+}
+
+.dg-label{
+  display:flex;align-items:baseline;gap:6px;
+  white-space:nowrap;
+}
+.dg-date{font-size:12px;font-weight:600;color:#1c1917;letter-spacing:-.1px}
+.dg-count{font-size:10.5px;color:#b5afa8}
+
+/* Photo strip inside a group */
+.strip{
+  display:flex;
+  gap:4px;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  width:100%;
+  /* NO overflow:hidden — clipped tiles when justify hasn't run yet */
+}
+/* tiles sized by flex-basis (set by JS justify pass) */
+.tile,.file-tile,.text-tile{flex:0 0 auto}
+
+/* Each photo tile — polaroid card */
+.tile{
+  position:relative;
+  min-width:100px;max-width:600px;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  display:flex;flex-direction:column; /* caption fills remaining height */
+}
+.tile:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.13);z-index:1}
+
+/* Image portion — fixed height, clips the photo */
+.tile-img{
+  width:100%;
+  height:var(--row-h);
+  overflow:hidden;
+  position:relative;
+  background:#edeae5;
+  flex-shrink:0;
+}
+.tile-img img{
+  width:100%;height:100%;
+  object-fit:cover;display:block;
+  opacity:0;transition:opacity .35s;
+  position:relative;z-index:1; /* img above shimmer */
+}
+.tile-img img.ok{opacity:1}
+/* shimmer sits BELOW the image via z-index */
+.tile-img::after{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,#edeae5 0%,#e0dbd4 50%,#edeae5 100%);
+  background-size:200% 100%;animation:shim 1.3s infinite;
+  pointer-events:none;
+}
+/* once image is loaded, kill shimmer completely */
+.tile-img.done::after{display:none}
+
+/* Caption below the image — flex:1 so all cards same height */
+.tile-cap{
+  padding:10px 12px 11px;
+  border-top:1px solid #f0ede9;
+  flex:1;display:flex;flex-direction:column;justify-content:space-between;
+  gap:6px;
+}
+.tile-cap-text{
+  font-size:12.5px;line-height:1.6;color:#44403c;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;word-break:break-word;flex:1;
+}
+.tile-cap-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+}
+.tile-cap-tags{display:flex;flex-wrap:wrap;gap:3px;min-width:0}
+.tile-cap-tag{font-size:10px;padding:1px 6px;border-radius:100px;background:rgba(224,123,57,.1);color:var(--accent);font-weight:500;white-space:nowrap}
+.tile-cap-time{font-size:10.5px;color:#b5afa8;white-space:nowrap;flex-shrink:0}
+
+/* File attachment tile — same card shape as photo tile */
+.file-tile{
+  min-width:120px;max-width:280px;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+  display:flex;flex-direction:column;
+  text-decoration:none;
+}
+.file-tile:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.13);z-index:1}
+.file-tile-icon{
+  width:100%;height:var(--row-h);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  background:var(--ft-bg,#f5f3f0);
+  flex-shrink:0;
+}
+.file-tile-fa{font-size:48px;line-height:1;color:var(--ft-color,#6b7280)}
+.file-tile-ext{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ft-color,#6b7280);background:var(--ft-bg2,#e8e4de);
+  padding:3px 10px;border-radius:100px;
+}
+/* file-tile caption stretches same as photo tile caption */
+.file-tile .tile-cap{border-top:1px solid #f0ede9}
+
+/* Text tile — same card height via flex stretch */
+.text-tile{
+  min-width:200px;max-width:400px;
+  background:#fff;border:1px solid #ebe8e3;
+  border-radius:10px;padding:14px 16px 12px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  flex-shrink:0;cursor:default;
+  box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  transition:transform .18s,box-shadow .18s;
+}
+.text-tile:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.13)}
+.text-body{
+  font-size:13px;line-height:1.68;color:#44403c;
+  display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;
+  overflow:hidden;flex:1;margin-bottom:10px;
+}
+.text-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ttag{font-size:10.5px;padding:2px 8px;border-radius:100px;background:rgba(224,123,57,.1);color:var(--accent);font-weight:500}
+.text-time{font-size:11px;color:#b5afa8;margin-top:5px}
+.attach-chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px 2px;border-top:1px solid #f0ede9}
+.text-tile .attach-chips{padding:8px 0 2px;border-top:1px solid #ebe8e3}
+.attach-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 9px 4px 7px;border-radius:100px;
+  background:color-mix(in srgb, var(--chip-color) 9%, #fff);
+  border:1px solid color-mix(in srgb, var(--chip-color) 22%, #e5e7eb);
+  color:var(--chip-color);text-decoration:none;
+  font-size:11px;font-weight:500;max-width:160px;
+  transition:all .15s;cursor:pointer;
+}
+.attach-chip:hover{background:color-mix(in srgb, var(--chip-color) 16%, #fff);transform:translateY(-1px)}
+.attach-chip i{font-size:11px;flex-shrink:0;width:12px;text-align:center}
+.chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Play badge on videos / multi-image */
+.tbadge{
+  position:absolute;bottom:6px;left:6px;z-index:2;
+  background:rgba(0,0,0,.6);color:#fff;
+  font-size:10px;font-weight:600;padding:2px 6px 2px 5px;
+  border-radius:100px;display:flex;align-items:center;gap:3px;
+  backdrop-filter:blur(4px);
+}
+.tbadge svg{flex-shrink:0}
+
+/* ── TEXT MEMO STRIP ── */
+/* Text memos appear as fixed-height text tiles inline with photos */
+.text-tile{
+  height:100%;
+  min-width:180px;max-width:280px;
+  background:#fff;border:1px solid #ebe8e3;
+  border-radius:4px;padding:12px 14px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  flex-shrink:0;cursor:default;
+  transition:border-color .18s;
+}
+.text-tile:hover{border-color:#d5cfc7}
+.text-body{
+  font-size:12.5px;line-height:1.65;color:#6b6560;
+  display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;
+  overflow:hidden;flex:1;
+}
+.text-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
+.ttag{font-size:10.5px;padding:2px 7px;border-radius:100px;background:rgba(224,123,57,.1);color:var(--accent);font-weight:500}
+.text-time{font-size:10.5px;color:#b5afa8;margin-top:6px}
+
+/* ── CENTER STATES ── */
+.ctr{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:12px;color:#a8a29e;padding:24px}
+.ci{font-size:48px;opacity:.35}
+.ct{font-size:20px;font-weight:600;color:#1c1917}
+.cs{font-size:13px;line-height:1.65;max-width:280px;color:#a8a29e}
+.btn-cta{padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;margin-top:4px;transition:all .18s}
+.btn-cta:hover{background:#c2410c}
+
+/* Load more */
+.lm{padding:16px;text-align:center;width:100%}
+.btn-more{padding:9px 24px;border:1px solid #e0dbd4;border-radius:100px;background:#fff;color:#78716c;cursor:pointer;font-family:'Geist',sans-serif;font-size:13px;transition:all .16s}
+.btn-more:hover{border-color:var(--accent);color:var(--accent)}
+
+.btn-new{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:100px;font-family:'Geist',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-new:hover{background:#c2410c;transform:translateY(-1px);box-shadow:0 4px 12px rgba(224,123,57,.35)}
+
+/* ── COMPOSE MODAL ── */
+.compose-bk{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.2);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center}
+.compose-bk.h{display:none}
+.compose-modal{
+  background:#fff;border-radius:20px;
+  box-shadow:0 24px 64px rgba(0,0,0,.15);
+  width:520px;max-width:95vw;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.compose-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid #ebe8e3}
+.compose-title{font-size:15px;font-weight:600;color:#1c1917}
+.compose-close{width:30px;height:30px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#a8a29e;transition:all .15s}
+.compose-close:hover{background:#f5f3f0;color:#1c1917}
+.compose-body{padding:16px 20px}
+.compose-textarea{
+  width:100%;min-height:140px;padding:12px 14px;
+  background:#f7f6f4;border:1.5px solid transparent;
+  border-radius:12px;font-family:'Geist',sans-serif;
+  font-size:14px;line-height:1.7;color:#1c1917;
+  resize:vertical;outline:none;transition:all .18s;
+}
+.compose-textarea:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.compose-textarea::placeholder{color:#b5afa8}
+.compose-hint{font-size:11.5px;color:#b5afa8;padding:6px 2px 0;line-height:1.5}
+.compose-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 18px;gap:10px}
+.compose-vis{display:flex;align-items:center;gap:6px;font-size:12px;color:#78716c}
+.compose-vis select{padding:5px 10px 5px 8px;background:#f0ede9;border:1px solid #ebe8e3;border-radius:8px;font-family:'Geist',sans-serif;font-size:12px;color:#1c1917;outline:none;cursor:pointer}
+.compose-actions{display:flex;gap:8px}
+.btn-discard{padding:8px 16px;background:#f0ede9;border:none;border-radius:8px;color:#78716c;font-family:'Geist',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
+.btn-discard:hover{background:#e8e4de;color:#1c1917}
+.btn-post{padding:8px 18px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Geist',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
+.btn-post:hover:not(:disabled){background:#c2410c}
+.btn-post:disabled{opacity:.5;cursor:not-allowed}
+.btn-attach{display:flex;align-items:center;gap:5px;padding:6px 10px;background:#f0ede9;border:1px solid #ebe8e3;border-radius:8px;color:#78716c;font-family:'Geist',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-attach:hover{background:#e8e4de;color:#1c1917;border-color:#d5cfc7}
+.attach-thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;background:#f0ede9;border:1px solid #ebe8e3;flex-shrink:0}
+.attach-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.at-name{font-size:9px;color:#78716c;padding:4px;word-break:break-all;line-height:1.3;display:flex;align-items:center;justify-content:center;height:100%;text-align:center}
+.attach-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px}
+.attach-progress{position:absolute;bottom:0;left:0;height:3px;background:var(--accent);transition:width .3s;border-radius:0 0 8px 8px}
+@keyframes btn-spin{to{transform:rotate(360deg)}}
+.spinning{animation:btn-spin .7s linear infinite}
+.compose-status{font-size:12.5px;padding:8px 20px;line-height:1.5;word-break:break-word}
+.compose-status.e{background:#fef0ec;color:#b93a1a;border-top:1px solid #fdd0be}
+.compose-status.s{background:#ecfdf5;color:#15803d;border-top:1px solid #bbf7d0}
+.bk{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.25);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+.bk.h{display:none}
+.pnl{background:#fff;border:1px solid #ebe8e3;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.12);padding:28px;width:380px;max-height:90vh;overflow-y:auto}
+.pt{font-size:18px;font-weight:600;color:#1c1917;margin-bottom:4px}
+.ps{font-size:12.5px;color:#78716c;margin-bottom:20px;line-height:1.5}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:10.5px;font-weight:500;color:#a8a29e;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.fld input{width:100%;padding:9px 13px;background:#f7f6f4;border:1.5px solid #ebe8e3;border-radius:9px;font-family:'Geist',sans-serif;font-size:13.5px;color:#1c1917;outline:none;transition:all .18s}
+.fld input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.fld input::placeholder{color:#b5afa8}
+.pa{display:flex;gap:8px;margin-top:4px}
+.bsave{flex:1;padding:11px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .18s}
+.bsave:hover:not(:disabled){background:#c2410c}
+.bsave:disabled{opacity:.5;cursor:not-allowed}
+.bcancel{padding:11px 18px;background:#f0ede9;border:none;border-radius:9px;color:#78716c;font-family:'Geist',sans-serif;font-size:13.5px;cursor:pointer;transition:all .18s}
+.bcancel:hover{background:#e8e4de;color:#1c1917}
+.msg{margin-top:10px;font-size:12px;padding:8px 12px;border-radius:8px}
+.msg.e{background:rgba(185,58,26,.15);color:#f87171;border:1px solid rgba(185,58,26,.25)}
+.msg.s{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
+.hbox{margin-top:14px;padding:11px 13px;background:#f7f6f4;border-radius:9px;font-size:11.5px;color:#78716c;line-height:1.6}
+.hbox strong{color:#1c1917}
+.cbox{margin-top:8px;padding:10px 13px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:9px;font-size:11.5px;color:#a16207;line-height:1.6}
+
+/* ── LIGHTBOX ── */
+.lb{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.97);display:flex;align-items:center;justify-content:center}
+.lb.h{display:none}
+.lb-inner{position:relative;max-width:92vw;max-height:92vh;display:flex;align-items:center;justify-content:center}
+.lb-img{max-width:92vw;max-height:90vh;object-fit:contain;border-radius:6px;display:block}
+.lb-btn{position:absolute;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lb-btn:hover{background:rgba(255,255,255,.2)}
+.lb-x{top:-50px;right:0;font-size:16px}
+.lb-p{left:-56px;font-size:24px;top:50%;transform:translateY(-50%)}
+.lb-n{right:-56px;font-size:24px;top:50%;transform:translateY(-50%)}
+.lb-meta{position:absolute;bottom:-36px;left:0;right:0;display:flex;justify-content:space-between;align-items:center}
+.lb-cap{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+.lb-cnt{font-size:12px;color:#555}
+.lb-spin{width:32px;height:32px;border:2.5px solid #333;border-top-color:#888;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── AUTH SCREEN ── */
+.auth-screen{
+  position:fixed;inset:0;z-index:500;
+  background:linear-gradient(135deg,#fdf9f6 0%,#f0ede8 50%,#e8e2da 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.auth-screen.h{display:none}
+.auth-card{
+  width:100%;max-width:420px;
+  background:#fff;border-radius:24px;
+  box-shadow:0 8px 48px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+.auth-hero{
+  background:linear-gradient(135deg,var(--accent),#c2410c);
+  padding:32px 32px 28px;color:#fff;
+}
+.auth-brand{
+  display:flex;align-items:center;gap:10px;margin-bottom:16px;
+}
+.auth-brand-icon{
+  width:36px;height:36px;background:rgba(255,255,255,.2);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.auth-brand-name{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.auth-tagline{font-size:14px;opacity:.85;line-height:1.5}
+.auth-body{padding:28px 32px 32px}
+.auth-tabs{
+  display:flex;background:#f5f3f0;border-radius:10px;padding:3px;
+  margin-bottom:24px;gap:3px;
+}
+.auth-tab{
+  flex:1;padding:8px;border:none;background:transparent;
+  border-radius:8px;font-family:'Geist',sans-serif;font-size:13.5px;
+  font-weight:500;color:#78716c;cursor:pointer;transition:all .15s;
+}
+.auth-tab.on{background:#fff;color:#1c1917;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.auth-section{display:none}
+.auth-section.on{display:flex;flex-direction:column;gap:14px}
+.auth-fld label{
+  display:block;font-size:11px;font-weight:600;color:#a8a29e;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;
+}
+.auth-fld{display:flex;flex-direction:column}
+.auth-input{
+  padding:10px 14px;background:#f7f6f4;border:1.5px solid #ebe8e3;
+  border-radius:10px;font-family:'Geist',sans-serif;font-size:14px;
+  color:#1c1917;outline:none;transition:all .18s;
+}
+.auth-input:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,123,57,.1)}
+.auth-input::placeholder{color:#c4bdb5}
+.auth-btn{
+  padding:12px;background:var(--accent);color:#fff;border:none;
+  border-radius:10px;font-family:'Geist',sans-serif;font-size:14px;
+  font-weight:600;cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:4px;
+}
+.auth-btn:hover:not(:disabled){background:#c2410c;transform:translateY(-1px);box-shadow:0 4px 14px rgba(224,123,57,.3)}
+.auth-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.auth-msg{font-size:12.5px;padding:9px 12px;border-radius:8px;line-height:1.5}
+.auth-msg.e{background:#fef0ec;color:#b93a1a}
+.auth-msg.s{background:#ecfdf5;color:#15803d}
+.auth-divider{display:flex;align-items:center;gap:10px;color:#c4bdb5;font-size:12px;margin:4px 0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#ebe8e3}
+.auth-url-row{
+  display:flex;gap:6px;align-items:flex-end;
+}
+.auth-url-row .auth-fld{flex:1}
+.auth-url-help{font-size:11px;color:#b5afa8;margin-top:5px;line-height:1.5}
+
+
+/* ── MEDIA TILES (audio/video inline player) ── */
+.media-tile{
+  flex-shrink:0;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;
+}
+.media-tile-player{
+  width:100%;flex-shrink:0;
+  background:#0f0f0f;
+  display:flex;align-items:center;justify-content:center;
+  height:var(--row-h);
+  overflow:hidden;position:relative;
+}
+.media-tile-player video{
+  width:100%;height:100%;object-fit:contain;display:block;
+}
+.media-tile-player audio{
+  width:calc(100% - 24px);position:absolute;bottom:12px;left:12px;
+}
+/* Audio-only: show waveform bg */
+.media-tile-player.audio-only{
+  background:linear-gradient(135deg,#1e1035,#0c1a3a);
+  flex-direction:column;gap:12px;
+  padding:20px;
+}
+.media-tile-player.audio-only i{
+  font-size:40px;color:rgba(255,255,255,.6);
+}
+.media-tile-player.audio-only audio{
+  position:static;width:100%;
+}
+
+</style>
+</head>
+<body>
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-hero">
+      <div class="auth-brand">
+        <div class="auth-brand-icon"><i class="fa-solid fa-camera-retro"></i></div>
+        <span class="auth-brand-name">Memos Gallery</span>
+      </div>
+      <div class="auth-tagline">Your personal note & photo gallery.<br/>Connect to your Memos instance to get started.</div>
+    </div>
+    <div class="auth-body">
+      <!-- Server URL — shared by both tabs -->
+      <div class="auth-fld" style="margin-bottom:16px">
+        <label>Memos Server URL</label>
+        <input class="auth-input" id="authUrl" type="url" placeholder="https://your-memos.example.com"/>
+        <div class="auth-url-help">The URL of your self-hosted Memos server.</div>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="atab-login" onclick="switchAuthTab('login')">Sign in</button>
+        <button class="auth-tab" id="atab-signup" onclick="switchAuthTab('signup')">Sign up</button>
+        <button class="auth-tab" id="atab-token" onclick="switchAuthTab('token')">Token</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-section on" id="asec-login">
+        <div class="auth-fld">
+          <label>Username</label>
+          <input class="auth-input" id="loginUser" placeholder="username" autocomplete="username"/>
+        </div>
+        <div class="auth-fld">
+          <label>Password</label>
+          <input class="auth-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <div id="loginMsg"></div>
+        <button class="auth-btn" id="loginBtn" onclick="doLogin()">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign in
+        </button>
+      </div>
+
+      <!-- SIGNUP -->
+      <div class="auth-section" id="asec-signup">
+        <div class="auth-fld">
+          <label>Username</label>
+          <input class="auth-input" id="signupUser" placeholder="choose a username" autocomplete="username"/>
+        </div>
+        <div class="auth-fld">
+          <label>Password</label>
+          <input class="auth-input" id="signupPass" type="password" placeholder="••••••••" autocomplete="new-password"/>
+        </div>
+        <div class="auth-fld">
+          <label>Confirm password</label>
+          <input class="auth-input" id="signupPass2" type="password" placeholder="••••••••" autocomplete="new-password"/>
+        </div>
+        <div id="signupMsg"></div>
+        <button class="auth-btn" id="signupBtn" onclick="doSignup()">
+          <i class="fa-solid fa-user-plus"></i> Create account
+        </button>
+      </div>
+
+      <!-- TOKEN (existing flow) -->
+      <div class="auth-section" id="asec-token">
+        <div class="auth-fld">
+          <label>Access Token</label>
+          <input class="auth-input" id="authToken" type="password" placeholder="memos_xxxxxxxxxxxxxxxx"/>
+          <div class="auth-url-help">Memos → Settings → My Account → Access Tokens → Generate</div>
+        </div>
+        <div id="tokenMsg"></div>
+        <button class="auth-btn" id="tokenBtn" onclick="doTokenAuth()">
+          <i class="fa-solid fa-key"></i> Connect with token
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="shell" id="appShell" style="display:none">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M4 5h16v2H4zm0 6h16v2H4zm0 6h10v2H4z"/></svg></div>
+    <span class="logo-text">Memos</span>
+  </div>
+
+  <div class="nav-label">Browse</div>
+  <button class="nav on" id="nav-all" onclick="setTab('all')">
+    <span class="ni"><i class="fa-solid fa-border-all" style="width:15px;text-align:center"></i></span>
+    All
+  </button>
+  <button class="nav" id="nav-photos" onclick="setTab('photos')">
+    <span class="ni"><i class="fa-solid fa-images" style="width:15px;text-align:center"></i></span>
+    Photos
+  </button>
+  <button class="nav" id="nav-notes" onclick="setTab('notes')">
+    <span class="ni"><i class="fa-solid fa-file-lines" style="width:15px;text-align:center"></i></span>
+    Notes
+  </button>
+
+  <div class="nav-label" style="margin-top:6px">Tags</div>
+  <div id="tagNav"></div>
+
+  <div class="sidebar-bottom">
+    <div class="stat-row"><span>Memos</span><span id="s-memos">—</span></div>
+    <div class="stat-row"><span>Photos</span><span id="s-photos">—</span></div>
+    <button class="nav" style="margin-top:8px" onclick="openCfg()">
+      <span class="ni"><i class="fa-solid fa-gear" style="width:15px;text-align:center"></i></span>
+      Settings
+    </button>
+    <button class="nav" onclick="load(true)">
+      <span class="ni"><i class="fa-solid fa-rotate" style="width:15px;text-align:center"></i></span>
+      Refresh
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="sw">
+      <span class="si-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+      <input class="si" id="qi" placeholder="Search memos…" oninput="doQ(this.value)"/>
+    </div>
+    <div class="topbar-right">
+      <div class="row-h-ctrl">
+        <i class="fa-solid fa-table-cells-large" style="color:#b5afa8;font-size:13px"></i>
+        <input type="range" id="rowSlider" min="120" max="340" value="220" oninput="setRowH(this.value)"/>
+      </div>
+      <button class="ib" title="Refresh" onclick="load(true)">
+        <i class="fa-solid fa-rotate" style="font-size:14px"></i>
+      </button>
+      <button class="btn-new" onclick="openCompose()">
+        <i class="fa-solid fa-plus"></i>
+        New note
+      </button>
+      <button class="ib" id="cfgBtn" onclick="openCfg()">
+        <i class="fa-solid fa-gear" style="font-size:14px"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="feed" id="feed">
+    <div class="ctr">
+      <div class="ci">📸</div>
+      <div class="ct">Memos Gallery</div>
+      <div class="cs">Connect your Memos instance to get started.</div>
+      <button class="btn-cta" onclick="openCfg()">Connect Memos</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMPOSE -->
+<div class="compose-bk h" id="composeBk" onclick="if(event.target===this)closeCompose()">
+  <div class="compose-modal">
+    <div class="compose-head">
+      <span class="compose-title">New note</span>
+      <button class="compose-close" onclick="closeCompose()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="compose-body">
+      <textarea class="compose-textarea" id="composeText" placeholder="What's on your mind? Use #tags to organise…"></textarea>
+      <!-- Attachment previews -->
+      <div id="attachPreviews" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+      <div class="compose-hint">Supports **bold**, *italic*, #hashtags · ⌘↵ to save</div>
+    </div>
+    <div id="composeStatus"></div>
+    <div class="compose-foot">
+      <div class="compose-vis">
+        <!-- Attach button -->
+        <button class="btn-attach" onclick="document.getElementById('fileInput').click()" title="Attach files">
+          <i class="fa-solid fa-paperclip"></i>
+          Attach
+        </button>
+        <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*,.pdf,.txt,.md" style="display:none" onchange="handleFiles(this.files)"/>
+        <span style="width:1px;height:18px;background:#ebe8e3;margin:0 4px"></span>
+        <i class="fa-regular fa-eye" style="color:#b5afa8;font-size:13px"></i>
+        <select id="composeVis" style="margin-left:4px">
+          <option value="VISIBILITY_PUBLIC">Public</option>
+          <option value="VISIBILITY_PROTECTED">Protected</option>
+          <option value="VISIBILITY_PRIVATE" selected>Private</option>
+        </select>
+      </div>
+      <div class="compose-actions">
+        <button class="btn-discard" onclick="closeCompose()">Discard</button>
+        <button class="btn-post" id="postBtn" onclick="postMemo()">
+          <i id="postIcon" class="fa-solid fa-paper-plane"></i>
+          <span id="postLabel">Save memo</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="bk h" id="bk" onclick="if(event.target===this)closeCfg()">
+  <div class="pnl">
+    <div class="pt">Settings</div>
+    <div class="ps">Connect your Memos server to browse notes and photos.</div>
+    <div class="fld"><label>Server URL</label><input type="url" id="cu" placeholder="https://your-memos.example.com"/></div>
+    <div class="fld"><label>Access Token</label><input type="password" id="ct" placeholder="memos_xxxxxxxxxxxxxxxx"/></div>
+    <div class="pa">
+      <button class="bcancel" onclick="closeCfg()">Cancel</button>
+      <button class="bsave" id="cbtn" onclick="doConnect()">Connect & Save</button>
+    </div>
+    <div id="cmsg"></div>
+    <div class="hbox"><strong>Get token:</strong> Memos → Settings → My Account → Access Tokens → Generate</div>
+    <div class="cbox">💡 From claude.ai? Add <code>Access-Control-Allow-Origin: *</code> in your reverse proxy.</div>
+  </div>
+</div>
+
+</div><!-- /appShell -->
+
+<!-- LIGHTBOX -->
+<div class="lb h" id="lb">
+  <div class="lb-inner">
+    <button class="lb-btn lb-x" onclick="lbClose()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="lb-btn lb-p" id="lbP" onclick="lbNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <div id="lbContent" style="display:flex;align-items:center;justify-content:center;min-width:240px;min-height:240px">
+      <div class="lb-spin"></div>
+    </div>
+    <button class="lb-btn lb-n" id="lbN" onclick="lbNav(1)"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="lb-meta">
+      <div class="lb-cap" id="lbCap"></div>
+      <div class="lb-cnt" id="lbCnt"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────
+const C = {
+  get url(){ return localStorage.getItem('mg_url')||'' },
+  get tok(){ return localStorage.getItem('mg_tok')||'' },
+  save(u,t){ localStorage.setItem('mg_url',u); localStorage.setItem('mg_tok',t) }
+};
+
+// ─── Authenticated image fetch → blob URL ─────────────────────────────
+const imgCache = new Map();
+async function fetchImg(url) {
+  if (imgCache.has(url)) return imgCache.get(url);
+  if (!C.tok) { imgCache.set(url, url); return url; }
+  try {
+    const r = await fetch(url, {headers:{'Authorization':'Bearer '+C.tok}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const blobUrl = URL.createObjectURL(await r.blob());
+    imgCache.set(url, blobUrl);
+    return blobUrl;
+  } catch(e) { console.warn('img fail:', url, e.message); return null; }
+}
+
+// Load image into element; after load, trigger row justification
+function loadTile(url, imgEl, wrapEl) {
+  fetchImg(url).then(src => {
+    if (!src) {
+      if (wrapEl) wrapEl.closest('.tile')?.style.setProperty('display','none');
+      return;
+    }
+    imgEl.src = src;
+    imgEl.onerror = () => { if(wrapEl) wrapEl.closest('.tile')?.style.setProperty('display','none'); };
+  });
+}
+
+// ── Justify a strip ────────────────────────────────────────────────────
+// Called after each image loads. Recalculates all flex-bases so the row
+// fills the container width at exactly rowH, proportional to aspect ratio.
+// ── Justify a strip ───────────────────────────────────────────────────
+// Scales tiles so the strip fills the container width.
+// Golden ratio (1.618) is the max landscape aspect ratio per tile.
+const PHI = 1.618; // golden ratio — max landscape width:height
+
+function clampAspect(w, h) {
+  // Clamp aspect ratio: max landscape = PHI:1, max portrait = 1:PHI
+  const ratio = w / h;
+  if (ratio > PHI) return PHI * h;      // too wide → cap at golden ratio
+  if (ratio < 1 / PHI) return h / PHI;  // too tall → cap at inverse golden ratio
+  return w;
+}
+
+function justifyStrip(strip) {
+  if (!strip) return;
+  requestAnimationFrame(() => {
+    const dg = strip.closest('.dg');
+    const containerW = (dg ? dg.offsetWidth : strip.offsetWidth) - 32; // subtract padding
+    if (containerW <= 0) return;
+
+    const tiles = Array.from(strip.children);
+    if (!tiles.length) return;
+
+    const GAP = 4;
+
+    // Natural widths — golden-ratio-clamped
+    const naturals = tiles.map(tile => {
+      const img = tile.querySelector('.tile-img img');
+      if (img && img.naturalWidth && img.naturalHeight) {
+        return clampAspect(rowH * img.naturalWidth / img.naturalHeight, rowH);
+      }
+      const fb = parseFloat(tile.style.flexBasis) || tile.offsetWidth || rowH;
+      return Math.min(fb, rowH * PHI); // non-image tiles also capped
+    });
+
+    // Single tile: natural width, max 50% of container
+    if (tiles.length === 1) {
+      tiles[0].style.flexBasis = Math.min(naturals[0], containerW * 0.5) + 'px';
+      return;
+    }
+
+    // Multi-tile: scale all proportionally to fill width
+    const totalNat = naturals.reduce((a, b) => a + b, 0);
+    const avail = containerW - (tiles.length - 1) * GAP;
+    const scale = avail / totalNat;
+    tiles.forEach((tile, i) => {
+      tile.style.flexBasis = Math.round(naturals[i] * scale) + 'px';
+    });
+  });
+}
+
+// ─── State ────────────────────────────────────────────────────────────
+let memos = [];
+let lbImgs = [], lbIdx = 0;
+let tab = 'all', activeTag = null, query = '', nextTok = null;
+let rowH = 220;
+
+// ─── Settings ─────────────────────────────────────────────────────────
+function openCfg() {
+  document.getElementById('cu').value = C.url;
+  document.getElementById('ct').value = C.tok;
+  document.getElementById('bk').classList.remove('h');
+  document.getElementById('cmsg').innerHTML = '';
+}
+function closeCfg() { document.getElementById('bk').classList.add('h'); }
+async function doConnect() {
+  const url = document.getElementById('cu').value.trim().replace(/\/$/,'');
+  const tok = document.getElementById('ct').value.trim();
+  if (!url) { setMsg('Enter your Memos URL.','e'); return; }
+  const btn = document.getElementById('cbtn');
+  btn.disabled=true; btn.textContent='Connecting…'; setMsg('','');
+  try {
+    const h = {}; if (tok) h['Authorization']='Bearer '+tok;
+    const r = await fetch(`${url}/api/v1/memos?pageSize=1`, {headers:h});
+    if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+    imgCache.clear(); C.save(url, tok);
+    setMsg('Connected!','s');
+    setTimeout(()=>{ closeCfg(); load(true); }, 500);
+  } catch(e) {
+    let m=e.message;
+    if (m.includes('Failed to fetch')||m.includes('NetworkError'))
+      m='Cannot reach server. Check URL and CORS headers.';
+    setMsg(m,'e');
+  } finally { btn.disabled=false; btn.textContent='Connect & Save'; }
+}
+function setMsg(m,t) {
+  document.getElementById('cmsg').innerHTML = m?`<div class="msg ${t}">${m}</div>`:'';
+}
+
+// ─── Fetch ────────────────────────────────────────────────────────────
+async function load(reset=true) {
+  if (!C.url) return;
+  if (reset) { memos=[]; nextTok=null; imgCache.clear(); }
+  showSkeleton();
+  try {
+    const h={}; if(C.tok) h['Authorization']='Bearer '+C.tok;
+    let ep=`${C.url}/api/v1/memos?pageSize=50`;
+    if (!reset && nextTok) ep+='&pageToken='+encodeURIComponent(nextTok);
+    const r=await fetch(ep,{headers:h});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    const roots=(d.memos||d||[]).filter(m=>!m.parent||m.parent==='');
+    memos = reset ? roots : [...memos,...roots];
+    nextTok = d.nextPageToken||null;
+    renderSidebar();
+    render();
+  } catch(e) { showErr(e.message); }
+}
+
+// ─── Row height control ───────────────────────────────────────────────
+function setRowH(v) {
+  rowH = +v;
+  document.documentElement.style.setProperty('--row-h', v+'px');
+  // Re-justify so cards rescale to the new height
+  requestAnimationFrame(() => document.querySelectorAll('.strip').forEach(justifyStrip));
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────
+function renderSidebar() {
+  const totalImgs = memos.reduce((a,m)=>a+getImgs(m).length,0);
+  document.getElementById('s-memos').textContent = memos.length;
+  document.getElementById('s-photos').textContent = totalImgs;
+  const tc={};
+  memos.forEach(m=>getTags(m.content).forEach(t=>tc[t]=(tc[t]||0)+1));
+  const sorted=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('tagNav').innerHTML = sorted.map(([tag,cnt])=>`
+    <button class="nav ${activeTag===tag?'on':''}" onclick="setTagFilter('${esc(tag)}')">
+      <span class="ni" style="font-size:11px;color:#3a3a3a">#</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(tag)}</span>
+      <span class="nbadge">${cnt}</span>
+    </button>`).join('');
+}
+function setTagFilter(tag) {
+  activeTag = activeTag===tag ? null : tag;
+  renderSidebar(); render();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────
+function doQ(v) { query=v.toLowerCase(); activeTag=null; renderSidebar(); render(); }
+function setTab(t) {
+  tab=t; activeTag=null;
+  ['all','photos','notes'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('on',x===t));
+  renderSidebar(); render();
+}
+
+function getFiltered() {
+  let list=memos;
+  if (query) list=list.filter(m=>(m.content||'').toLowerCase().includes(query));
+  if (activeTag) list=list.filter(m=>getTags(m.content).includes(activeTag));
+  if (tab==='photos') list=list.filter(m=>getImgs(m).length>0);
+  if (tab==='notes') list=list.filter(m=>getImgs(m).length===0);
+  return list;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────
+function render() {
+  const feed = document.getElementById('feed');
+  if (!memos.length) { showEmpty(); return; }
+  const list = getFiltered();
+  if (!list.length) {
+    feed.innerHTML=`<div class="ctr"><div class="ci">🔍</div><div class="ct">No results</div><div class="cs">Try a different search or tag.</div></div>`;
+    return;
+  }
+
+  // Build lightbox list
+  lbImgs = list.flatMap(m => getImgs(m).map(u=>({
+    url:u,
+    caption:(m.content||'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').trim().slice(0,120)
+  })));
+
+  // Group by date
+  const grps={};
+  list.forEach(m=>{
+    const d=new Date(m.createTime||(m.createdTs*1000));
+    const k=d.toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'});
+    (grps[k]=grps[k]||[]).push(m);
+  });
+
+  let imgCursor=0;
+
+  // Build DOM directly (more control than innerHTML for image loading)
+  feed.innerHTML='';
+
+  const wrap = document.createElement('div');
+  wrap.className='groups-wrap';
+
+  for (const [date, ms] of Object.entries(grps)) {
+    // Collect tiles for this group — img, file, or text
+    const tiles = []; // {type:'img'|'file'|'text', memo, url?, lbIdx?, attachment?}
+    ms.forEach(m=>{
+      const imgs = getImgs(m);
+      const media = getMedia(m);
+      const atts = getAttachments(m);
+      if (imgs.length > 0) {
+        imgs.forEach(u=>tiles.push({type:'img', memo:m, url:u, lbIdx:imgCursor++}));
+      } else if (media.length > 0) {
+        // Audio/video get inline player tiles
+        media.forEach(a=>tiles.push({type:'media', memo:m, attachment:a}));
+      } else if (atts.length > 0) {
+        atts.forEach(a=>tiles.push({type:'file', memo:m, attachment:a}));
+      } else {
+        tiles.push({type:'text', memo:m});
+      }
+    });
+
+    if (!tiles.length) continue;
+
+    // Build group element
+    const dg = document.createElement('div');
+    dg.className='dg';
+
+    // Date label
+    const label = document.createElement('div');
+    label.className='dg-label';
+    const photoCount = tiles.filter(t=>t.type==='img').length;
+    const fileCount  = tiles.filter(t=>t.type==='file').length;
+    const countStr   = [photoCount && `${photoCount} photo${photoCount>1?'s':''}`, fileCount && `${fileCount} file${fileCount>1?'s':''}`].filter(Boolean).join(', ') || '';
+    label.innerHTML=`<span class="dg-date">${fmtDate(new Date(ms[0].createTime||(ms[0].createdTs*1000)))}</span><span class="dg-count">${countStr}</span>`;
+    dg.appendChild(label);
+
+    // Strip
+    const strip = document.createElement('div');
+    strip.className='strip';
+
+    tiles.forEach(t=>{
+      if (t.type==='img') {
+        const memo = t.memo;
+        const bodyText = (memo.content||'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').trim();
+        const tags = getTags(memo.content);
+        const time = fmtT(memo.createTime||(memo.createdTs*1000));
+
+        // Outer card
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.style.flexBasis = rowH + 'px'; // initial 1:1; updated on img load
+        tile.style.flex = '0 0 auto';
+        tile.onclick = () => lbOpen(t.lbIdx);
+
+        // Image wrapper
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'tile-img';
+
+        const img = document.createElement('img');
+        img.alt = '';
+        img.addEventListener('load', function(){
+          if (this.naturalWidth && this.naturalHeight) {
+            const w = Math.round(rowH * this.naturalWidth / this.naturalHeight);
+            tile.style.flexBasis = w + 'px';
+          }
+          img.classList.add('ok');
+          imgWrap.classList.add('done');
+          // Re-justify the whole strip now that we know this aspect ratio
+          justifyStrip(tile.parentElement);
+        });
+        imgWrap.appendChild(img);
+
+        // Multi-image badge
+        const memoImgs = getImgs(memo);
+        if (memoImgs.length > 1 && memoImgs[0] === t.url) {
+          const badge = document.createElement('div');
+          badge.className = 'tbadge';
+          badge.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h16v12H4zm0-4h16v2H4z" opacity=".5"/><path d="M8 4V2h8v2"/></svg>${memoImgs.length}`;
+          imgWrap.appendChild(badge);
+        }
+        tile.appendChild(imgWrap);
+
+        // Caption — only show if memo has text, tags, or non-image attachments
+        const attachments = getAttachments(memo);
+        if (bodyText || tags.length || attachments.length) {
+          const cap = document.createElement('div');
+          cap.className = 'tile-cap';
+          if (bodyText) {
+            const txt = document.createElement('div');
+            txt.className = 'tile-cap-text';
+            txt.innerHTML = renderMd(bodyText);
+            cap.appendChild(txt);
+          }
+          const foot = document.createElement('div');
+          foot.className = 'tile-cap-foot';
+          const tagsEl = document.createElement('div');
+          tagsEl.className = 'tile-cap-tags';
+          tagsEl.innerHTML = tags.map(g => `<span class="tile-cap-tag">#${esc(g)}</span>`).join('');
+          const timeEl = document.createElement('div');
+          timeEl.className = 'tile-cap-time';
+          timeEl.textContent = time;
+          foot.appendChild(tagsEl);
+          foot.appendChild(timeEl);
+          cap.appendChild(foot);
+          buildAttachChips(attachments, cap);
+          tile.appendChild(cap);
+        }
+
+        strip.appendChild(tile);
+        loadTile(t.url, img, imgWrap);
+
+      } else if (t.type === 'media') {
+        // ── Inline audio/video player tile ────────────────────────────
+        const a = t.attachment;
+        const memo = t.memo;
+        const isVideo = a.type.startsWith('video/');
+        const bodyText = (memo.content||'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').trim();
+        const tags = getTags(memo.content);
+        const time = fmtT(memo.createTime||(memo.createdTs*1000));
+
+        const tile = document.createElement('div');
+        tile.className = 'media-tile';
+        tile.style.flexBasis = isVideo ? Math.round(rowH * PHI) + 'px' : Math.round(rowH * 1.4) + 'px';
+        tile.style.flex = '0 0 auto';
+
+        const playerWrap = document.createElement('div');
+        playerWrap.className = 'media-tile-player' + (isVideo ? '' : ' audio-only');
+
+        if (isVideo) {
+          const vid = document.createElement('video');
+          vid.controls = true; vid.preload = 'metadata';
+          vid.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
+          // Auth-aware src: fetch blob if token exists
+          if (C.tok) {
+            fetchImg(a.url).then(src => { if(src) vid.src = src; });
+          } else { vid.src = a.url; }
+          playerWrap.appendChild(vid);
+        } else {
+          // Audio-only
+          const icon = document.createElement('i');
+          icon.className = 'fa-solid fa-music';
+          icon.style.cssText = 'font-size:40px;color:rgba(255,255,255,.5)';
+          const fname = document.createElement('div');
+          fname.style.cssText = 'font-size:11px;color:rgba(255,255,255,.45);text-align:center;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+          fname.textContent = a.filename;
+          const aud = document.createElement('audio');
+          aud.controls = true; aud.preload = 'metadata';
+          aud.style.cssText = 'width:100%;margin-top:8px';
+          if (C.tok) {
+            fetchImg(a.url).then(src => { if(src) aud.src = src; });
+          } else { aud.src = a.url; }
+          playerWrap.appendChild(icon);
+          playerWrap.appendChild(fname);
+          playerWrap.appendChild(aud);
+        }
+        tile.appendChild(playerWrap);
+
+        // Caption
+        const cap = document.createElement('div');
+        cap.className = 'tile-cap';
+        if (bodyText) {
+          const txt = document.createElement('div');
+          txt.className = 'tile-cap-text';
+          txt.innerHTML = renderMd(bodyText);
+          cap.appendChild(txt);
+        }
+        const foot = document.createElement('div');
+        foot.className = 'tile-cap-foot';
+        const tagsEl = document.createElement('div');
+        tagsEl.className = 'tile-cap-tags';
+        tagsEl.innerHTML = tags.map(g=>`<span class="tile-cap-tag">#${esc(g)}</span>`).join('');
+        const timeEl = document.createElement('div');
+        timeEl.className = 'tile-cap-time';
+        timeEl.textContent = time;
+        foot.appendChild(tagsEl); foot.appendChild(timeEl);
+        cap.appendChild(foot);
+        tile.appendChild(cap);
+        strip.appendChild(tile);
+
+      } else if (t.type === 'file') {
+        // ── File icon tile ──────────────────────────────────────────
+        const a = t.attachment;
+        const memo = t.memo;
+        const bodyText = (memo.content||'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').trim();
+        const tags = getTags(memo.content);
+        const time = fmtT(memo.createTime||(memo.createdTs*1000));
+
+        // Colour + FA icon per type
+        const typeMap = {
+          'application/pdf':   { bg:'#fef2f2', bg2:'#fecaca', color:'#dc2626', fa:'fa-solid fa-file-pdf',    ext:'PDF'   },
+          'audio/':            { bg:'#f0f9ff', bg2:'#bae6fd', color:'#0284c7', fa:'fa-solid fa-music',        ext:'Audio' },
+          'video/':            { bg:'#faf5ff', bg2:'#e9d5ff', color:'#7c3aed', fa:'fa-solid fa-film',         ext:'Video' },
+          'text/':             { bg:'#f0fdf4', bg2:'#bbf7d0', color:'#16a34a', fa:'fa-solid fa-file-lines',   ext:'Text'  },
+          'application/zip':   { bg:'#fffbeb', bg2:'#fde68a', color:'#d97706', fa:'fa-solid fa-file-zipper',  ext:'ZIP'   },
+          'application/x-zip':{ bg:'#fffbeb', bg2:'#fde68a', color:'#d97706', fa:'fa-solid fa-file-zipper',  ext:'ZIP'   },
+          'application/x-rar':{ bg:'#fffbeb', bg2:'#fde68a', color:'#d97706', fa:'fa-solid fa-file-zipper',  ext:'RAR'   },
+          'application/vnd.openxmlformats-officedocument.wordprocessingml': { bg:'#eff6ff', bg2:'#bfdbfe', color:'#1d4ed8', fa:'fa-solid fa-file-word',  ext:'DOCX' },
+          'application/vnd.openxmlformats-officedocument.spreadsheetml':    { bg:'#f0fdf4', bg2:'#bbf7d0', color:'#15803d', fa:'fa-solid fa-file-excel', ext:'XLSX' },
+        };
+        let style = { bg:'#f5f3f0', bg2:'#e8e4de', color:'#6b7280', fa:'fa-solid fa-paperclip', ext: a.filename.split('.').pop().toUpperCase().slice(0,6) };
+        for (const [k, v] of Object.entries(typeMap)) {
+          if (a.type === k || a.type.startsWith(k)) { style = v; break; }
+        }
+
+        const tile = document.createElement('div');
+        tile.className = 'file-tile';
+        tile.style.flexBasis = Math.round(rowH * 0.75) + 'px';
+        tile.style.setProperty('--ft-bg', style.bg);
+        tile.style.setProperty('--ft-bg2', style.bg2);
+        tile.style.setProperty('--ft-color', style.color);
+
+        // Icon area (same height as image tiles)
+        const iconArea = document.createElement('div');
+        iconArea.className = 'file-tile-icon';
+        iconArea.innerHTML = `
+          <i class="${style.fa} file-tile-fa"></i>
+          <div class="file-tile-ext">${style.ext}</div>`;
+        tile.appendChild(iconArea);
+
+        // Caption with filename + text + tags + time — reuse tile-cap for consistent styling
+        const cap = document.createElement('div');
+        cap.className = 'tile-cap';
+        const fname = document.createElement('div');
+        fname.className = 'tile-cap-text';
+        fname.style.cssText = 'font-weight:500;color:#1c1917;font-size:12px;-webkit-line-clamp:2';
+        fname.textContent = a.filename;
+        cap.appendChild(fname);
+        if (bodyText) {
+          const txt = document.createElement('div');
+          txt.className = 'tile-cap-text';
+          txt.style.marginTop = '4px';
+          txt.innerHTML = renderMd(bodyText);
+          cap.appendChild(txt);
+        }
+        const foot = document.createElement('div');
+        foot.className = 'tile-cap-foot';
+        const tagsEl = document.createElement('div');
+        tagsEl.className = 'tile-cap-tags';
+        tagsEl.innerHTML = tags.map(g=>`<span class="tile-cap-tag">#${esc(g)}</span>`).join('');
+        const timeEl = document.createElement('div');
+        timeEl.className = 'tile-cap-time';
+        timeEl.textContent = time;
+        foot.appendChild(tagsEl); foot.appendChild(timeEl);
+        cap.appendChild(foot);
+        tile.appendChild(cap);
+
+        // Click to download (auth-aware)
+        tile.addEventListener('click', () => {
+          if (!C.tok) { window.open(a.url, '_blank'); return; }
+          fetchImg(a.url).then(src => {
+            if (!src) return;
+            const link = document.createElement('a');
+            link.href = src; link.download = a.filename; link.click();
+          });
+        });
+
+        strip.appendChild(tile);
+
+      } else {
+        // Text tile
+        const tile = document.createElement('div');
+        tile.className='text-tile';
+        const body=(t.memo.content||'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').trim();
+        const tags=getTags(t.memo.content);
+        const time=fmtT(t.memo.createTime||(t.memo.createdTs*1000));
+        const attachments=getAttachments(t.memo);
+        tile.innerHTML=`
+          <div class="text-body">${renderMd(body)}</div>
+          <div>
+            <div class="text-tags">${tags.map(g=>`<span class="ttag">#${esc(g)}</span>`).join('')}</div>
+            <div class="text-time">${time}</div>
+          </div>`;
+        buildAttachChips(attachments, tile);
+        strip.appendChild(tile);
+      }
+    });
+
+    dg.appendChild(strip);
+    // Justify non-image tiles immediately (file/text tiles don't trigger img load)
+    requestAnimationFrame(() => justifyStrip(strip));
+    wrap.appendChild(dg);
+  }
+
+  if (nextTok) {
+    const lm=document.createElement('div');
+    lm.className='lm';
+    lm.innerHTML=`<button class="btn-more" onclick="load(false)">Load more</button>`;
+    wrap.appendChild(lm);
+  }
+
+  feed.appendChild(wrap);
+}
+
+// ─── Image URL builder ────────────────────────────────────────────────
+function getImgs(m) {
+  const base=C.url.replace(/\/$/,'');
+  const out=[];
+  if (Array.isArray(m.resources)) {
+    m.resources.forEach(r=>{
+      if (!r.type||!r.type.startsWith('image/')) return;
+      if (r.externalLink){out.push(r.externalLink);return}
+      if (r.name){
+        const fn=r.filename||r.name.split('/').pop();
+        out.push(`${base}/file/${r.name}/${encodeURIComponent(fn)}`);
+      }
+    });
+  }
+  const re=/!\[[^\]]*\]\(([^)]+)\)/g;let x;
+  while((x=re.exec(m.content||''))!==null) if(!out.includes(x[1]))out.push(x[1]);
+  return out;
+}
+
+// Non-image resources split into: media (audio/video) and files (everything else)
+function getResourceUrl(r) {
+  const base = C.url.replace(/\/$/,'');
+  if (r.externalLink) return r.externalLink;
+  if (r.name) {
+    const fn = r.filename || r.name.split('/').pop();
+    return `${base}/file/${r.name}/${encodeURIComponent(fn)}`;
+  }
+  return null;
+}
+
+function getMedia(m) {
+  if (!Array.isArray(m.resources)) return [];
+  return m.resources.filter(r => r.type && (r.type.startsWith('audio/') || r.type.startsWith('video/')))
+    .map(r => ({ url: getResourceUrl(r), filename: r.filename || r.name?.split('/').pop() || 'media', type: r.type }))
+    .filter(a => a.url);
+}
+
+function getAttachments(m) {
+  const out = [];
+  if (!Array.isArray(m.resources)) return out;
+  m.resources.forEach(r => {
+    if (!r.type) return;
+    if (r.type.startsWith('image/') || r.type.startsWith('audio/') || r.type.startsWith('video/')) return;
+    const url = getResourceUrl(r);
+    if (!url) return;
+    const fn = r.filename || (r.name ? r.name.split('/').pop() : 'file');
+    out.push({ url, filename: fn, type: r.type });
+  });
+  return out;
+}
+
+// Return FA icon class and colour for a mime type
+function attachIcon(type) {
+  if (type.startsWith('video/'))       return { fa: 'fa-solid fa-film',         color: '#7c3aed' };
+  if (type.startsWith('audio/'))       return { fa: 'fa-solid fa-music',         color: '#0891b2' };
+  if (type === 'application/pdf')      return { fa: 'fa-solid fa-file-pdf',      color: '#dc2626' };
+  if (type.includes('zip')||type.includes('tar')||type.includes('gz')||type.includes('rar'))
+                                       return { fa: 'fa-solid fa-file-zipper',   color: '#d97706' };
+  if (type.startsWith('text/'))        return { fa: 'fa-solid fa-file-lines',    color: '#16a34a' };
+  if (type.includes('word')||type.includes('wordprocessingml'))
+                                       return { fa: 'fa-solid fa-file-word',     color: '#1d4ed8' };
+  if (type.includes('sheet')||type.includes('spreadsheetml'))
+                                       return { fa: 'fa-solid fa-file-excel',    color: '#15803d' };
+  if (type.startsWith('image/'))       return { fa: 'fa-solid fa-image',         color: '#0ea5e9' };
+  return                                      { fa: 'fa-solid fa-paperclip',     color: '#6b7280' };
+}
+
+// Build attachment chips DOM, appended into a container el
+function buildAttachChips(attachments, container) {
+  if (!attachments.length) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'attach-chips';
+  attachments.forEach(a => {
+    const { fa, color } = attachIcon(a.type);
+    const chip = document.createElement('a');
+    chip.className = 'attach-chip';
+    chip.href = C.tok ? '#' : a.url;
+    chip.target = '_blank';
+    chip.title = a.filename;
+    chip.style.setProperty('--chip-color', color);
+    chip.innerHTML = `<i class="${fa}"></i><span class="chip-name">${esc(a.filename)}</span>`;
+    chip.addEventListener('click', e => {
+      if (!C.tok) return;
+      e.preventDefault();
+      fetchImg(a.url).then(src => {
+        if (!src) return;
+        const link = document.createElement('a');
+        link.href = src; link.download = a.filename; link.click();
+      });
+    });
+    wrap.appendChild(chip);
+  });
+  container.appendChild(wrap);
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────────
+function lbOpen(i) {
+  lbIdx=i;
+  document.getElementById('lb').classList.remove('h');
+  document.body.style.overflow='hidden';
+  lbUpdate();
+}
+function lbClose() {
+  document.getElementById('lb').classList.add('h');
+  document.body.style.overflow='';
+}
+function lbNav(d) { lbIdx=Math.max(0,Math.min(lbImgs.length-1,lbIdx+d)); lbUpdate(); }
+function lbUpdate() {
+  const im=lbImgs[lbIdx]; if(!im)return;
+  const c=document.getElementById('lbContent');
+  c.innerHTML='<div class="lb-spin"></div>';
+  document.getElementById('lbCap').textContent=im.caption||'';
+  document.getElementById('lbCnt').textContent=lbImgs.length>1?`${lbIdx+1} / ${lbImgs.length}`:'';
+  document.getElementById('lbP').style.display=lbIdx===0?'none':'flex';
+  document.getElementById('lbN').style.display=lbIdx>=lbImgs.length-1?'none':'flex';
+  fetchImg(im.url).then(src=>{
+    if(!src)return;
+    const img=document.createElement('img');
+    img.className='lb-img'; img.src=src;
+    img.onload=()=>{c.innerHTML='';c.appendChild(img)};
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('lb').classList.contains('h'))return;
+  if(e.key==='Escape')lbClose();
+  if(e.key==='ArrowLeft')lbNav(-1);
+  if(e.key==='ArrowRight')lbNav(1);
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+function getTags(c){const t=[],re=/#([\w\/]+)/g;let m;while((m=re.exec(c||''))!==null)t.push(m[1]);return t}
+function renderMd(c){
+  return (c||'')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g,'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/#([\w\/]+)/g,'<span style="color:var(--accent)">#$1</span>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .trim();
+}
+function fmtDate(d){
+  const now=new Date(), diff=Math.floor((now-d)/86400000);
+  if(diff===0) return 'Today';
+  if(diff===1) return 'Yesterday';
+  if(diff<7) return d.toLocaleDateString('en-IN',{weekday:'long'});
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+}
+function fmtT(v){
+  const d=typeof v==='string'?new Date(v):new Date(v);
+  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+// ─── UI states ────────────────────────────────────────────────────────
+function showSkeleton(){
+  const w=[160,220,180,260,140,200,240,160,300,180,200,140];
+  document.getElementById('feed').innerHTML=
+    `<div class="groups-wrap">`+
+    w.map((width,i)=>`<div class="dg">
+      <div class="dg-label"><div style="width:80px;height:12px;background:#e8e4de;border-radius:4px;animation:shim 1.3s infinite ${i*.08}s"></div></div>
+      <div class="strip"><div class="tile" style="width:${width}px"></div></div>
+    </div>`).join('')+
+    `</div>`;
+}
+function showEmpty(){
+  document.getElementById('feed').innerHTML=`<div class="ctr"><div class="ci">📭</div><div class="ct">No memos</div><div class="cs">Nothing to show for the current filter.</div></div>`;
+}
+function showErr(msg){
+  let h=msg;
+  if(msg.includes('Failed to fetch')||msg.includes('NetworkError'))
+    h='Cannot reach Memos. Check URL and CORS headers.';
+  document.getElementById('feed').innerHTML=`<div class="ctr"><div class="ci">⚠️</div><div class="ct">Connection error</div><div class="cs" style="color:#c0392b">${h}</div><button class="btn-cta" onclick="openCfg()">Check settings</button></div>`;
+}
+
+// ─── Compose ──────────────────────────────────────────────────────────
+let pendingFiles = []; // {file, resourceName, previewEl}
+
+function openCompose() {
+  if (!C.url) { openCfg(); return; }
+  document.getElementById('composeBk').classList.remove('h');
+  document.getElementById('composeText').value = '';
+  document.getElementById('composeStatus').innerHTML = '';
+  pendingFiles = [];
+  // Clear DOM thumbnails too — not just the array
+  const prev = document.getElementById('attachPreviews');
+  prev.innerHTML = '';
+  prev.style.display = 'none';
+  // Detach and re-attach fileInput to kill any queued change events
+  const fi = document.getElementById('fileInput');
+  fi.value = '';
+  setPostBtn('idle');
+  setTimeout(()=>document.getElementById('composeText').focus(), 60);
+}
+function closeCompose() {
+  document.getElementById('composeBk').classList.add('h');
+  pendingFiles = [];
+  const prev = document.getElementById('attachPreviews');
+  prev.innerHTML = '';
+  prev.style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+// Button state machine
+function setPostBtn(state, msg) {
+  const btn = document.getElementById('postBtn');
+  const icon = document.getElementById('postIcon');
+  const label = document.getElementById('postLabel');
+  if (state === 'idle') {
+    btn.disabled = false;
+    icon.className = 'fa-solid fa-paper-plane';
+    label.textContent = 'Save memo';
+  } else if (state === 'saving') {
+    btn.disabled = true;
+    icon.className = 'fa-solid fa-rotate spinning';
+    label.textContent = msg || 'Saving…';
+  }
+}
+
+// File handling — read files immediately into memory as base64
+// Actual upload happens in postMemo after memo is created
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const idx = pendingFiles.length;
+    const entry = {
+      idx, file,
+      filename: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      size: file.size,
+      base64: null,
+      state: 'reading', // reading | ready | failed
+    };
+    pendingFiles.push(entry);
+
+    const thumb = buildThumb(file, idx);
+    document.getElementById('attachPreviews').appendChild(thumb);
+    document.getElementById('attachPreviews').style.display = 'flex';
+
+    // Read to base64 immediately
+    const reader = new FileReader();
+    const prog = thumb.querySelector('.attach-progress');
+    const statusEl = thumb.querySelector('.at-status');
+
+    reader.onprogress = e => {
+      if (e.lengthComputable && prog) prog.style.width = Math.round(e.loaded/e.total*80)+'%';
+    };
+    reader.onload = () => {
+      entry.base64 = reader.result.split(',')[1]; // strip data:mime;base64,
+      entry.state = 'ready';
+      if (prog) { prog.style.width = '100%'; setTimeout(()=>{ if(prog) prog.style.opacity='0'; }, 400); }
+      if (statusEl) { statusEl.textContent = '✓ Ready'; statusEl.style.color = '#16a34a'; }
+    };
+    reader.onerror = () => {
+      entry.state = 'failed';
+      if (prog) { prog.style.background='#ef4444'; prog.style.width='100%'; }
+      if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = '#ef4444'; }
+      setComposeStatus('Could not read file: ' + file.name, 'e');
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('fileInput').value = '';
+}
+
+function buildThumb(file, idx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'attach-thumb';
+  wrap.id = 'thumb-'+idx;
+  if (file.type.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    wrap.appendChild(img);
+  } else {
+    const name = document.createElement('div');
+    name.className = 'at-name';
+    name.textContent = file.name;
+    wrap.appendChild(name);
+  }
+  // Status label (Uploading… / ✓ / Failed)
+  const status = document.createElement('div');
+  status.className = 'at-status';
+  status.style.cssText = 'position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5);color:#fff';
+  wrap.appendChild(status);
+  const prog = document.createElement('div');
+  prog.className = 'attach-progress';
+  prog.style.width = '0%';
+  wrap.appendChild(prog);
+  const rm = document.createElement('button');
+  rm.className = 'attach-remove';
+  rm.innerHTML = '✕';
+  rm.onclick = () => removeFile(idx);
+  wrap.appendChild(rm);
+  return wrap;
+}
+
+function removeFile(idx) {
+  pendingFiles[idx] = null;
+  const el = document.getElementById('thumb-'+idx);
+  if (el) el.remove();
+  refreshPreviews();
+}
+
+function refreshPreviews() {
+  const active = pendingFiles.filter(Boolean);
+  document.getElementById('attachPreviews').style.display = active.length ? 'flex' : 'none';
+}
+
+async function postMemo() {
+  const content = document.getElementById('composeText').value.trim();
+  const active = pendingFiles.filter(Boolean);
+
+  if (!content && active.length === 0) {
+    setComposeStatus('Write something or attach a file first.', 'e'); return;
+  }
+
+  // Block if any file is still being read/uploaded
+  const uploading = active.filter(f => f.state === 'uploading' || f.state === 'reading');
+  if (uploading.length > 0) {
+    setComposeStatus(`Still uploading ${uploading.length} file(s) — wait a moment.`, 'e'); return;
+  }
+
+  setPostBtn('saving', 'Creating memo…');
+  setComposeStatus('', '');
+
+  const h = { 'Content-Type': 'application/json', ...(C.tok ? {'Authorization': 'Bearer '+C.tok} : {}) };
+  const mkAbort = (ms) => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c; };
+
+  try {
+    // ── Step 1: Create the memo, get its ID ──────────────────────────
+    const r1 = await fetch(`${C.url}/api/v1/memos`, {
+      method: 'POST', headers: h,
+      body: JSON.stringify({
+        content: content || '.',
+        visibility: document.getElementById('composeVis').value,
+      }),
+      signal: mkAbort(15000).signal,
+    });
+    if (!r1.ok) {
+      const t = await r1.text().catch(() => '');
+      throw new Error(`Memo create failed ${r1.status}: ${t.slice(0, 200)}`);
+    }
+    const memo = await r1.json();
+    const memoName = memo.name; // e.g. "memos/123456"
+    console.log('[memo created]', memoName);
+
+    // ── Step 2: Upload each pending file with memo id in payload ─────
+    const filesToUpload = active.filter(f => f.state === 'ready' && f.base64);
+    if (filesToUpload.length > 0) {
+      setPostBtn('saving', `Uploading ${filesToUpload.length} file(s)…`);
+      await Promise.all(filesToUpload.map(f => uploadToMemo(f, memoName, h, mkAbort)));
+    }
+
+    setComposeStatus('✓ Saved!', 's');
+    setTimeout(() => { closeCompose(); load(true); }, 600);
+
+  } catch (e) {
+    setComposeStatus(e.name === 'AbortError' ? 'Request timed out.' : e.message, 'e');
+    setPostBtn('idle');
+    console.error('[postMemo]', e);
+  }
+}
+
+// Upload one file, linking it to memoName via the "memo" field
+async function uploadToMemo(entry, memoName, h, mkAbort) {
+  const thumbEl = document.getElementById('thumb-' + entry.idx);
+  const prog = thumbEl?.querySelector('.attach-progress');
+  const statusEl = thumbEl?.querySelector('.at-status');
+  const setThumb = (t, c) => { if (statusEl) { statusEl.textContent = t; statusEl.style.color = c||'#fff'; } };
+
+  if (prog) prog.style.width = '60%';
+  setThumb('Uploading…', '#fff');
+
+  try {
+    const payload = {
+      name: `resources/${entry.filename}`,
+      filename: entry.filename,
+      content: entry.base64,
+      externalLink: '',
+      type: entry.mimeType,
+      size: String(entry.size),
+      memo: memoName,  // ← links resource to memo
+    };
+
+    const r = await fetch(`${C.url}/api/v1/resources`, {
+      method: 'POST', headers: h,
+      body: JSON.stringify(payload),
+      signal: mkAbort(60000).signal,
+    });
+
+    const raw = await r.text().catch(() => '');
+    if (!r.ok) {
+      let detail = raw;
+      try { detail = JSON.parse(raw).message || raw; } catch (_) {}
+      throw new Error(`Resource upload ${r.status}: ${detail.slice(0, 300)}`);
+    }
+
+    if (prog) { prog.style.width = '100%'; setTimeout(() => { if(prog) prog.style.opacity='0'; }, 500); }
+    setThumb('✓', '#16a34a');
+    console.log('[resource uploaded]', JSON.parse(raw).name);
+
+  } catch (e) {
+    if (prog) { prog.style.background = '#ef4444'; prog.style.width = '100%'; }
+    setThumb('✗', '#ef4444');
+    // Don't throw — memo was already created, just show warning
+    setComposeStatus('⚠ File attach failed: ' + e.message, 'e');
+    console.error('[uploadToMemo]', e.message);
+  }
+}
+
+function setComposeStatus(m,t) {
+  document.getElementById('composeStatus').innerHTML = m ? `<div class="compose-status ${t}">${m}</div>` : '';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('composeBk').classList.contains('h')) {
+    if ((e.metaKey||e.ctrlKey) && e.key==='Enter') { e.preventDefault(); postMemo(); }
+    if (e.key==='Escape') closeCompose();
+  }
+});
+
+// ─── Auth ──────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  ['login','signup','token'].forEach(t => {
+    document.getElementById('atab-'+t).classList.toggle('on', t===tab);
+    document.getElementById('asec-'+t).classList.toggle('on', t===tab);
+  });
+}
+
+function authUrl() {
+  return document.getElementById('authUrl').value.trim().replace(/\/$/,'');
+}
+
+function showAuthMsg(id, msg, type) {
+  document.getElementById(id).innerHTML = msg
+    ? `<div class="auth-msg ${type}">${msg}</div>` : '';
+}
+
+function enterApp(url, tok) {
+  imgCache.clear();
+  C.save(url, tok);
+  document.getElementById('authScreen').classList.add('h');
+  document.getElementById('appShell').style.display = 'flex';
+  load(true);
+}
+
+function showLogout() {
+  // Add a logout nav item dynamically (only once)
+  if (document.getElementById('logoutBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'logoutBtn';
+  btn.className = 'nav';
+  btn.style.marginTop = '4px';
+  btn.innerHTML = `<span class="ni"><i class="fa-solid fa-right-from-bracket" style="width:15px;text-align:center"></i></span>Sign out`;
+  btn.onclick = doLogout;
+  document.querySelector('.sidebar-bottom').appendChild(btn);
+}
+
+function doLogout() {
+  C.save('','');
+  imgCache.clear();
+  memos = [];
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('authScreen').classList.remove('h');
+  document.getElementById('authUrl').value = '';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('authToken').value = '';
+  showAuthMsg('loginMsg','','');
+}
+
+// Helper: create a permanent access token for the signed-in user
+async function createAccessToken(url, userName) {
+  const r = await fetch(`${url}/api/v1/${userName}/access_tokens`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    credentials: 'include', // session cookie from signin
+    body: JSON.stringify({ description: 'Memos Gallery', expiresAt: null })
+  });
+  if (!r.ok) return null;
+  const d = await r.json();
+  return d.accessToken || d.token || null;
+}
+
+async function doLogin() {
+  const url = authUrl();
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!url) { showAuthMsg('loginMsg','Enter your Memos server URL.','e'); return; }
+  if (!user||!pass) { showAuthMsg('loginMsg','Enter username and password.','e'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled=true; btn.innerHTML=`<i class="fa-solid fa-rotate spinning"></i> Signing in…`;
+  showAuthMsg('loginMsg','','');
+  try {
+    const r = await fetch(`${url}/api/v1/auth/signin`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({username:user, password:pass, neverExpire:true})
+    });
+    const raw = await r.text();
+    if (!r.ok) {
+      let msg = raw; try { msg = JSON.parse(raw).message||raw; } catch(_) {}
+      throw new Error(msg.slice(0,200));
+    }
+    const data = JSON.parse(raw);
+    // v1 signin may return accessToken directly, or a User object (name = "users/xxx")
+    let token = data.accessToken || data.token || '';
+    if (!token && data.name) {
+      // New Memos: signin sets a cookie session; create a real access token
+      token = await createAccessToken(url, data.name);
+    }
+    if (!token) throw new Error('Signed in but could not get an access token. Try the Token tab instead.');
+    showAuthMsg('loginMsg','✓ Signed in!','s');
+    setTimeout(()=>{ enterApp(url, token); showLogout(); }, 500);
+  } catch(e) {
+    showAuthMsg('loginMsg', e.message.includes('Failed to fetch')
+      ? 'Cannot reach server. Check URL and CORS headers.'
+      : 'Sign in failed: '+e.message, 'e');
+  } finally { btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-right-to-bracket"></i> Sign in`; }
+}
+
+async function doSignup() {
+  const url = authUrl();
+  const user = document.getElementById('signupUser').value.trim();
+  const pass = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPass2').value;
+  if (!url) { showAuthMsg('signupMsg','Enter your Memos server URL.','e'); return; }
+  if (!user) { showAuthMsg('signupMsg','Choose a username.','e'); return; }
+  if (pass.length < 3) { showAuthMsg('signupMsg','Password must be at least 3 characters.','e'); return; }
+  if (pass !== pass2) { showAuthMsg('signupMsg','Passwords do not match.','e'); return; }
+  const btn = document.getElementById('signupBtn');
+  btn.disabled=true; btn.innerHTML=`<i class="fa-solid fa-rotate spinning"></i> Creating account…`;
+  showAuthMsg('signupMsg','','');
+  try {
+    // Memos v1 signup — try /auth/signup first (some versions), fall back to /users (newer)
+    let data = null;
+    let token = '';
+
+    // Attempt 1: /api/v1/auth/signup
+    const r1 = await fetch(`${url}/api/v1/auth/signup`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:user, password:pass})
+    });
+    if (r1.ok) {
+      data = await r1.json();
+      token = data.accessToken || data.token || '';
+      if (!token && data.name) token = await createAccessToken(url, data.name) || '';
+    } else {
+      // Attempt 2: POST /api/v1/users (newer Memos)
+      const r2 = await fetch(`${url}/api/v1/users`, {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name:`users/${user}`, password:pass, role:'USER' })
+      });
+      const raw2 = await r2.text();
+      if (!r2.ok) {
+        let msg = raw2; try { msg = JSON.parse(raw2).message||raw2; } catch(_) {}
+        throw new Error(msg.slice(0,250));
+      }
+      data = JSON.parse(raw2);
+      // After creating user, sign in to get token
+      const r3 = await fetch(`${url}/api/v1/auth/signin`, {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username:user, password:pass, neverExpire:true})
+      });
+      if (r3.ok) {
+        const d3 = await r3.json();
+        token = d3.accessToken || d3.token || '';
+        if (!token && d3.name) token = await createAccessToken(url, d3.name) || '';
+      }
+    }
+
+    if (!token) throw new Error('Account created. Please use the Token tab to connect.');
+    showAuthMsg('signupMsg','✓ Account created!','s');
+    setTimeout(()=>{ enterApp(url, token); showLogout(); }, 500);
+  } catch(e) {
+    showAuthMsg('signupMsg', e.message.includes('Failed to fetch')
+      ? 'Cannot reach server. Check URL and CORS headers.'
+      : 'Sign up failed: '+e.message, 'e');
+  } finally { btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-user-plus"></i> Create account`; }
+}
+
+async function doTokenAuth() {
+  const url = authUrl();
+  const tok = document.getElementById('authToken').value.trim();
+  if (!url) { showAuthMsg('tokenMsg','Enter your Memos server URL.','e'); return; }
+  if (!tok) { showAuthMsg('tokenMsg','Enter your access token.','e'); return; }
+  const btn = document.getElementById('tokenBtn');
+  btn.disabled=true; btn.innerHTML=`<i class="fa-solid fa-rotate spinning"></i> Connecting…`;
+  showAuthMsg('tokenMsg','','');
+  try {
+    const r = await fetch(`${url}/api/v1/memos?pageSize=1`, {
+      headers:{'Authorization':'Bearer '+tok}
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+    showAuthMsg('tokenMsg','✓ Connected!','s');
+    setTimeout(()=>{ enterApp(url, tok); showLogout(); }, 500);
+  } catch(e) {
+    showAuthMsg('tokenMsg', e.message.includes('Failed to fetch')
+      ? 'Cannot reach server. Check URL and CORS headers.'
+      : 'Connection failed: '+e.message, 'e');
+  } finally { btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-key"></i> Connect with token`; }
+}
+
+// Enter key support on auth inputs
+['loginUser','loginPass'].forEach(id =>
+  document.getElementById(id)?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); })
+);
+['signupUser','signupPass','signupPass2'].forEach(id =>
+  document.getElementById(id)?.addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); })
+);
+document.getElementById('authToken')?.addEventListener('keydown', e => { if(e.key==='Enter') doTokenAuth(); });
+
+// ─── Init ─────────────────────────────────────────────────────────────
+document.documentElement.style.setProperty('--row-h', rowH+'px');
+
+// Responsive: re-justify all strips whenever the feed container resizes
+const feedEl = document.getElementById('feed');
+if (feedEl && window.ResizeObserver) {
+  new ResizeObserver(() => {
+    document.querySelectorAll('.strip').forEach(justifyStrip);
+  }).observe(feedEl);
+} else {
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.strip').forEach(justifyStrip);
+  });
+}
+if (C.url && C.tok) {
+  // Already authenticated — skip auth screen
+  document.getElementById('authScreen').classList.add('h');
+  document.getElementById('appShell').style.display = 'flex';
+  showLogout();
+  load(true);
+} else {
+  // Show auth screen, pre-fill URL if we have one
+  if (C.url) document.getElementById('authUrl').value = C.url;
+}
+</script>
+</body>
+</html>
