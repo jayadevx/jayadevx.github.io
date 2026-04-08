@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAULT KEY — TOTP Authenticator</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181d24;
+    --border: #2a3040;
+    --accent: #e8a030;
+    --accent2: #f0c060;
+    --green: #3ddc84;
+    --red: #ff4d4d;
+    --text: #d4dde8;
+    --muted: #5a6478;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Rajdhani', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--display);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.015) 2px,
+      rgba(255,255,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,160,48,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,160,48,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(232,160,48,0.3);
+    border-radius: 8px;
+  }
+
+  .logo-mark svg { width: 30px; height: 30px; }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .header p {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .code-section {
+    text-align: center;
+    padding: 8px 0 16px;
+  }
+
+  .code-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .totp-code {
+    font-family: var(--mono);
+    font-size: 52px;
+    letter-spacing: 12px;
+    color: var(--accent2);
+    text-shadow: 0 0 20px rgba(232,160,48,0.4);
+    user-select: all;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding-left: 12px;
+  }
+
+  .totp-code:hover {
+    color: #fff;
+    text-shadow: 0 0 30px rgba(232,160,48,0.8);
+  }
+
+  .totp-code.refreshing {
+    animation: flash 0.3s ease;
+  }
+
+  @keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.2; }
+    100% { opacity: 1; }
+  }
+
+  .progress-section {
+    margin-top: 20px;
+  }
+
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s linear, background-color 0.5s;
+    background: var(--accent);
+  }
+
+  .progress-bar-fill.warning { background: var(--red); }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .time-remaining {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .time-remaining span {
+    color: var(--text);
+    font-size: 15px;
+  }
+
+  .copy-hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .copy-hint.copied { color: var(--green); }
+
+  /* Secret config */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .secret-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .secret-input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--accent2);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  .btn-outline:hover {
+    background: rgba(232,160,48,0.1);
+    transform: translateY(-1px);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .info-row:last-child { border-bottom: none; }
+  .info-row .label { color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+  .info-row .value { font-family: var(--mono); font-size: 12px; color: var(--accent2); }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(61,220,132,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(61,220,132,0); }
+  }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 8px;
+    font-family: var(--mono);
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  .corner-deco {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .corner-deco.tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+  .corner-deco.br { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 30 30" fill="none" stroke="#e8a030" stroke-width="1.5">
+        <rect x="5" y="13" width="20" height="14" rx="2"/>
+        <path d="M10 13V9a5 5 0 0110 0v4"/>
+        <circle cx="15" cy="20" r="2" fill="#e8a030"/>
+        <line x1="15" y1="22" x2="15" y2="25"/>
+      </svg>
+    </div>
+    <h1>Vault Key</h1>
+    <p>TOTP Authenticator</p>
+  </div>
+
+  <!-- Main code display -->
+  <div class="card">
+    <div class="corner-deco tl"></div>
+    <div class="corner-deco br"></div>
+    <div class="code-section">
+      <div class="code-label"><span class="status-dot"></span>Active Token</div>
+      <div class="totp-code" id="totpCode" title="Click to copy">------</div>
+      <div class="progress-section">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-meta">
+          <div class="time-remaining">Expires in <span id="timeRemaining">--</span>s</div>
+          <div class="copy-hint" id="copyHint">Click code to copy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secret key config -->
+  <div class="card">
+    <div class="section-title">Secret Key</div>
+    <div class="input-group">
+      <input type="password" class="secret-input" id="secretInput" placeholder="Base32 Secret Key" value="JBSWY3DPEHPK3PXP" maxlength="64">
+      <button class="btn" onclick="applySecret()">Apply</button>
+    </div>
+    <div class="error-msg" id="errorMsg">Invalid Base32 secret key</div>
+    <div style="margin-top: 12px; display:flex; gap:8px;">
+      <button class="btn btn-outline" style="flex:1; font-size:11px;" onclick="generateNewSecret()">Generate New Secret</button>
+      <button class="btn btn-outline" style="flex:1; font-size:11px;" onclick="toggleShowSecret()">Show / Hide</button>
+    </div>
+  </div>
+
+  <!-- Config info -->
+  <div class="card">
+    <div class="section-title">Configuration</div>
+    <div class="info-row">
+      <span class="label">Algorithm</span>
+      <span class="value">HMAC-SHA1</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Period</span>
+      <span class="value">30 seconds</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Digits</span>
+      <span class="value">6</span>
+    </div>
+    <div class="info-row">
+      <span class="label">Standard</span>
+      <span class="value">RFC 6238</span>
+    </div>
+  </div>
+
+  <div class="footer">Vault Key — Secure TOTP Generator</div>
+</div>
+
+<script>
+// ─── Base32 Decode ─────────────────────────────────────────────────────────
+function base32Decode(encoded) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = encoded.toUpperCase().replace(/=+$/, '').replace(/\s/g, '');
+  let bits = 0, value = 0;
+  const output = [];
+  for (let i = 0; i < clean.length; i++) {
+    const idx = alphabet.indexOf(clean[i]);
+    if (idx === -1) throw new Error('Invalid Base32 char: ' + clean[i]);
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { bits -= 8; output.push((value >> bits) & 0xff); }
+  }
+  return new Uint8Array(output);
+}
+
+// ─── Base32 Encode ─────────────────────────────────────────────────────────
+function base32Encode(bytes) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0, value = 0, output = '';
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) { bits -= 5; output += alphabet[(value >> bits) & 31]; }
+  }
+  if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
+  return output;
+}
+
+// ─── HMAC-SHA1 via SubtleCrypto ────────────────────────────────────────────
+async function hmacSHA1(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey(
+    'raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+  return new Uint8Array(sig);
+}
+
+// ─── TOTP Generation ───────────────────────────────────────────────────────
+async function generateTOTP(secret, timestamp) {
+  const ts = timestamp || Date.now();
+  const counter = Math.floor(ts / 30000);
+  const keyBytes = base32Decode(secret);
+  const msg = new Uint8Array(8);
+  let c = counter;
+  for (let i = 7; i >= 0; i--) { msg[i] = c & 0xff; c >>= 8; }
+  const hmac = await hmacSHA1(keyBytes, msg);
+  const offset = hmac[19] & 0xf;
+  const code = (
+    ((hmac[offset]     & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8)  |
+     (hmac[offset + 3] & 0xff)
+  ) % 1000000;
+  return code.toString().padStart(6, '0');
+}
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let currentSecret = 'JBSWY3DPEHPK3PXP';
+let lastCode = '';
+
+// ─── UI Update ─────────────────────────────────────────────────────────────
+async function tick() {
+  const now = Date.now();
+  const secondsInPeriod = Math.floor(now / 1000) % 30;
+  const remaining = 30 - secondsInPeriod;
+  const pct = (remaining / 30) * 100;
+
+  document.getElementById('timeRemaining').textContent = remaining;
+  const bar = document.getElementById('progressBar');
+  bar.style.width = pct + '%';
+  bar.className = 'progress-bar-fill' + (remaining <= 7 ? ' warning' : '');
+
+  try {
+    const code = await generateTOTP(currentSecret);
+    if (code !== lastCode) {
+      const el = document.getElementById('totpCode');
+      el.classList.add('refreshing');
+      setTimeout(() => el.classList.remove('refreshing'), 300);
+      el.textContent = code;
+      lastCode = code;
+    }
+  } catch(e) { /* secret error handled elsewhere */ }
+}
+
+function applySecret() {
+  const val = document.getElementById('secretInput').value.trim();
+  const err = document.getElementById('errorMsg');
+  try {
+    base32Decode(val);
+    currentSecret = val;
+    lastCode = '';
+    err.classList.remove('show');
+    tick();
+  } catch(e) {
+    err.classList.add('show');
+  }
+}
+
+function toggleShowSecret() {
+  const inp = document.getElementById('secretInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function generateNewSecret() {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  const newSecret = base32Encode(bytes);
+  const inp = document.getElementById('secretInput');
+  inp.value = newSecret;
+  inp.type = 'text';
+  applySecret();
+}
+
+// ─── Copy on click ─────────────────────────────────────────────────────────
+document.getElementById('totpCode').addEventListener('click', () => {
+  const code = document.getElementById('totpCode').textContent;
+  if (code === '------') return;
+  navigator.clipboard.writeText(code).then(() => {
+    const hint = document.getElementById('copyHint');
+    hint.textContent = '✓ Copied!';
+    hint.className = 'copy-hint copied';
+    setTimeout(() => { hint.textContent = 'Click code to copy'; hint.className = 'copy-hint'; }, 2000);
+  });
+});
+
+// ─── Boot ──────────────────────────────────────────────────────────────────
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
