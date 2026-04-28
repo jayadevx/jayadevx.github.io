@@ -695,6 +695,35 @@ html,body{height:100%;font-family:'Geist',sans-serif;background:#FAF9F6;color:#1
   }
 }
 
+/* --- FOOTER STYLES --- */
+.memoir-footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #b0aaa3;
+  border-top: 1px solid #f0ede9;
+  background: transparent;
+  font-family: 'Geist', sans-serif;
+  letter-spacing: 0.2px;
+  transition: color 0.2s ease;
+  margin-top: auto;
+}
+.memoir-footer a {
+  color: #b0aaa3;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.memoir-footer a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.memoir-footer .heart-icon {
+  color: #e11d48;
+  display: inline-block;
+  margin: 0 2px;
+}
 </style>
 </head>
 <body>
@@ -846,6 +875,10 @@ html,body{height:100%;font-family:'Geist',sans-serif;background:#FAF9F6;color:#1
       <div class="cs">Connect your Memos instance to get started.</div>
       <button class="btn-cta" onclick="openCfg()">Connect Memos</button>
     </div>
+  </div>
+  <!-- FOOTER added: Copyright message by SingularityBlue -->
+  <div class="memoir-footer">
+    © 2025 Memoir · Crafted with <span class="heart-icon"><i class="fa-solid fa-heart"></i></span> by <a href="#" onclick="return false;">SingularityBlue</a>
   </div>
 </div>
 </div>
@@ -1330,8 +1363,11 @@ function render() {
   let imgCursor=0;
 
   // Build DOM directly (more control than innerHTML for image loading)
-  feed.innerHTML='';
-
+  // Keep footer intact: we only replace .feed content, not the whole .main
+  // But we must preserve the footer element which is outside .feed
+  // So we clear feed.innerHTML and then append groups
+  feed.innerHTML = ''; // clear but keep footer outside
+  
   const wrap = document.createElement('div');
   wrap.className='groups-wrap';
 
