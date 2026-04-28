@@ -325,6 +325,38 @@ html,body{height:100%;font-family:'Geist',sans-serif;background:#FAF9F6;color:#1
 .compose-status{font-size:12.5px;padding:8px 20px;line-height:1.5;word-break:break-word}
 .compose-status.e{background:#fef0ec;color:#b93a1a;border-top:1px solid #fdd0be}
 .compose-status.s{background:#ecfdf5;color:#15803d;border-top:1px solid #bbf7d0}
+@media(max-width:560px){
+  .compose-modal{
+    width:min(96vw,420px);
+    max-height:92vh;
+  }
+  .compose-body{
+    padding:14px 16px;
+  }
+  .compose-foot{
+    flex-direction:column;
+    align-items:stretch;
+    padding:12px 16px 16px;
+  }
+  .compose-vis{
+    flex-wrap:wrap;
+    width:100%;
+    gap:8px;
+  }
+  .compose-vis select{
+    flex:1;
+    min-width:120px;
+  }
+  .compose-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .btn-discard,.btn-post{
+    width:100%;
+    justify-content:center;
+  }
+}
 .bk{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.25);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
 .bk.h{display:none}
 .pnl{background:#fff;border:1px solid #e8e4de;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.12);padding:28px;width:380px;max-height:90vh;overflow-y:auto}
@@ -747,9 +779,21 @@ html,body{height:100%;font-family:'Geist',sans-serif;background:#FAF9F6;color:#1
     <span class="ni"><i class="fa-solid fa-images" style="width:15px;text-align:center"></i></span>
     Photos
   </button>
-  <button class="nav" id="nav-notes" onclick="setTab('notes')">
+  <button class="nav" id="nav-text" onclick="setTab('text')">
     <span class="ni"><i class="fa-solid fa-file-lines" style="width:15px;text-align:center"></i></span>
-    Notes
+    Text
+  </button>
+  <button class="nav" id="nav-files" onclick="setTab('files')">
+    <span class="ni"><i class="fa-solid fa-paperclip" style="width:15px;text-align:center"></i></span>
+    Files
+  </button>
+  <button class="nav" id="nav-audio" onclick="setTab('audio')">
+    <span class="ni"><i class="fa-solid fa-music" style="width:15px;text-align:center"></i></span>
+    Audio
+  </button>
+  <button class="nav" id="nav-video" onclick="setTab('video')">
+    <span class="ni"><i class="fa-solid fa-film" style="width:15px;text-align:center"></i></span>
+    Video
   </button>
 
   <div class="nav-label" style="margin-top:6px">Tags</div>
@@ -1007,6 +1051,11 @@ let fileViewerUrl = null;
 let fileViewerItems = [];
 let fileViewerIndex = -1;
 let currentViewedMemoId = null;
+let remoteSearchMemos = [];
+let remoteSearchNextTok = null;
+let remoteSearchLoading = false;
+let searchDebounce = null;
+let searchRequestSeq = 0;
 
 function alertUser(msg) {
   try { window.alert(msg); } catch (_) {}
@@ -1094,6 +1143,68 @@ async function load(reset=true) {
   } catch(e) { showErr(e.message); }
 }
 
+function escFilterValue(v='') {
+  return String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function mergeMemoLists(...lists) {
+  const seen = new Map();
+  lists.flat().forEach(m => {
+    if (m?.id && !seen.has(m.id)) seen.set(m.id, m);
+  });
+  return [...seen.values()];
+}
+
+async function searchPocketBase(reset=true, reqIdOverride=null) {
+  if (!C.url) return;
+  const q = query.trim();
+  if (!q) {
+    remoteSearchMemos = [];
+    remoteSearchNextTok = null;
+    remoteSearchLoading = false;
+    render();
+    return;
+  }
+
+  const uid = currentUserId();
+  if (!uid) return;
+
+  const reqId = reqIdOverride ?? ++searchRequestSeq;
+  const page = reset ? 1 : (remoteSearchNextTok || 1);
+  if (reset) {
+    remoteSearchMemos = [];
+    remoteSearchNextTok = null;
+  }
+  remoteSearchLoading = true;
+  render();
+
+  try {
+    const filter = encodeURIComponent(`user="${escFilterValue(uid)}" && content~"${escFilterValue(q)}"`);
+    const ep = `${C.url}/api/collections/memos/records?page=${page}&perPage=48&sort=-created&filter=${filter}&expand=resources_via_memo`;
+    const r = await fetch(ep, { headers: pbHeaders(false) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (reqId !== searchRequestSeq) return;
+    const fetched = (d.items || []).map(rec => pbToMemo(rec));
+    remoteSearchMemos = reset ? fetched : mergeMemoLists(remoteSearchMemos, fetched);
+    remoteSearchNextTok = d.page < d.totalPages ? d.page + 1 : null;
+  } catch (e) {
+    if (reqId === searchRequestSeq) console.error('[searchPocketBase]', e);
+  } finally {
+    if (reqId === searchRequestSeq) {
+      remoteSearchLoading = false;
+      render();
+    }
+  }
+}
+
+function queueSearch(reset=true, reqIdOverride=null) {
+  window.clearTimeout(searchDebounce);
+  searchDebounce = window.setTimeout(() => {
+    searchPocketBase(reset, reqIdOverride);
+  }, 220);
+}
+
 // Map PocketBase record → memo shape the renderer expects
 function pbToMemo(rec) {
   const expanded = rec.expand?.resources_via_memo || [];
@@ -1140,29 +1251,52 @@ function setTagFilter(tag) {
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────
-function doQ(v) { query=v.toLowerCase(); activeTag=null; renderSidebar(); render(); }
+function doQ(v) {
+  query = v.trim();
+  activeTag = null;
+  if (!query) {
+    window.clearTimeout(searchDebounce);
+    searchRequestSeq++;
+    remoteSearchMemos = [];
+    remoteSearchNextTok = null;
+    remoteSearchLoading = false;
+  } else {
+    const reqId = ++searchRequestSeq;
+    queueSearch(true, reqId);
+  }
+  renderSidebar();
+  render();
+}
 function setTab(t) {
   tab=t; activeTag=null;
-  ['all','photos','notes'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('on',x===t));
+  ['all','photos','text','files','audio','video'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('on',x===t));
   renderSidebar(); render();
 }
 
 function getFiltered() {
-  let list=memos;
-  if (query) list=list.filter(m=>(m.content||'').toLowerCase().includes(query));
+  let list = query ? mergeMemoLists(memos, remoteSearchMemos) : memos;
+  if (query) {
+    const q = query.toLowerCase();
+    list = list.filter(m => (m.content || '').toLowerCase().includes(q));
+  }
   if (activeTag) list=list.filter(m=>getTags(m.content).includes(activeTag));
   if (tab==='photos') list=list.filter(m=>getImgs(m).length>0);
-  if (tab==='notes') list=list.filter(m=>getImgs(m).length===0);
+  if (tab==='text') list=list.filter(m=>hasTextMemo(m));
+  if (tab==='files') list=list.filter(m=>getAttachments(m).length>0);
+  if (tab==='audio') list=list.filter(m=>getMediaByKind(m, 'audio').length>0);
+  if (tab==='video') list=list.filter(m=>getMediaByKind(m, 'video').length>0);
   return list;
 }
 
 // ─── Render ───────────────────────────────────────────────────────────
 function render() {
   const feed = document.getElementById('feed');
-  if (!memos.length) { showEmpty(); return; }
+  if (!memos.length && !remoteSearchMemos.length && !remoteSearchLoading) { showEmpty(); return; }
   const list = getFiltered();
   if (!list.length) {
-    feed.innerHTML=`<div class="ctr"><div class="ci">🔍</div><div class="ct">No results</div><div class="cs">Try a different search or tag.</div></div>`;
+    const msg = query && remoteSearchLoading ? 'Searching cached memos and PocketBase…' : 'Try a different search or tag.';
+    const title = query && remoteSearchLoading ? 'Searching' : 'No results';
+    feed.innerHTML=`<div class="ctr"><div class="ci">🔍</div><div class="ct">${title}</div><div class="cs">${msg}</div></div>`;
     return;
   }
 
@@ -1514,10 +1648,11 @@ function render() {
     wrap.appendChild(dg);
   }
 
-  if (nextTok) {
+  const canLoadMore = query ? remoteSearchNextTok : nextTok;
+  if (canLoadMore) {
     const lm=document.createElement('div');
     lm.className='lm';
-    lm.innerHTML=`<button class="btn-more" onclick="load(false)">Load more</button>`;
+    lm.innerHTML=`<button class="btn-more" onclick="${query ? 'searchPocketBase(false)' : 'load(false)'}">${remoteSearchLoading ? 'Loading…' : 'Load more'}</button>`;
     wrap.appendChild(lm);
   }
 
@@ -1563,6 +1698,15 @@ function getMedia(m) {
   return m.resources.filter(r => r.type && (r.type.startsWith('audio/') || r.type.startsWith('video/')))
     .map(r => ({ url: pbResourceUrl(r), filename: r.filename || r._pbFile || 'media', type: r.type }))
     .filter(a => a.url);
+}
+
+function getMediaByKind(m, kind) {
+  return getMedia(m).filter(a => a.type.startsWith(kind + '/'));
+}
+
+function hasTextMemo(m) {
+  const body = (m.content || '').replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
+  return !!body;
 }
 
 function getAttachments(m) {
