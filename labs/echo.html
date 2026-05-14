@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECHO — Voice Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --amber:#EF9F27;--amber-glow:rgba(239,159,39,0.15);--amber-glow2:rgba(239,159,39,0.08);
+  --red:#E24B4A;
+  --bg0:#0e0e0f;--bg1:#161618;--bg2:#1e1e21;--bg3:#28282d;
+  --border:rgba(255,255,255,0.07);--border-amber:rgba(239,159,39,0.3);
+  --text:#f0ede8;--text-dim:#7a7872;--text-mid:#aea99f;
+  --r:10px;--rlg:16px;
+}
+body{background:var(--bg0);font-family:'Syne',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 3rem;user-select:none}
+header{display:flex;align-items:baseline;gap:.75rem;margin-bottom:2.5rem}
+.logo{font-size:1.75rem;font-weight:800;color:var(--amber);letter-spacing:.25em}
+.logo-sub{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--text-dim);letter-spacing:.1em}
+.app{width:100%;max-width:680px;display:flex;flex-direction:column;gap:1.25rem}
+.panel{background:var(--bg1);border:1px solid var(--border);border-radius:var(--rlg);padding:1.25rem 1.5rem}
+.plabel{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-dim);letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem}
+#waveform{width:100%;height:112px;border-radius:var(--r);background:var(--bg2);display:block}
+.transport{display:flex;align-items:center;gap:1rem;margin-top:1.25rem;flex-wrap:wrap}
+.btn-rec{width:68px;height:68px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.btn-rec:hover{border-color:var(--red)}
+.btn-rec.on{background:var(--red);border-color:var(--red);animation:prec 1s ease-in-out infinite}
+@keyframes prec{0%,100%{box-shadow:0 0 0 5px rgba(226,75,74,.2)}50%{box-shadow:0 0 0 12px rgba(226,75,74,.04)}}
+.rdot{width:24px;height:24px;border-radius:50%;background:var(--red);transition:all .15s}
+.btn-rec.on .rdot{background:#fff;border-radius:4px;width:18px;height:18px}
+.bsm{height:48px;padding:0 1.4rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text-mid);font-family:'Space Mono',monospace;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .15s}
+.bsm:hover{border-color:var(--amber);color:var(--amber)}
+.bsm.on{background:var(--amber-glow);border-color:var(--amber);color:var(--amber)}
+.bsm:disabled{opacity:.3;cursor:default}
+.bsm.del:hover{border-color:rgba(226,75,74,.5);color:var(--red)}
+.pb-row{display:none;align-items:center;gap:.85rem;margin-top:.85rem}
+.pb-row input[type=range]{flex:1;accent-color:var(--amber);height:3px;cursor:pointer}
+.pb-time{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text-dim);white-space:nowrap;min-width:72px;text-align:right}
+.timer{font-family:'Space Mono',monospace;font-size:1rem;color:var(--text-dim);letter-spacing:.12em;margin-left:auto}
+.timer.on{color:var(--amber)}
+.spill{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.1em;padding:3px 10px;border-radius:999px;background:var(--bg2);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap}
+.spill.rec{background:rgba(226,75,74,.1);color:var(--red);border-color:rgba(226,75,74,.3)}
+.spill.ready{background:var(--amber-glow2);color:var(--amber);border-color:var(--border-amber)}
+.echo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.kwrap{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.klabel{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase}
+.kcanvas{cursor:ns-resize}
+.kval{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--text-mid);min-width:40px;text-align:center}
+
+.dlbtn{height:38px;padding:0 1rem;border-radius:var(--r);border:1px solid var(--border-amber);background:var(--amber-glow2);color:var(--amber);font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-decoration:none;display:flex;align-items:center;transition:all .15s}
+.dlbtn:hover{background:var(--amber-glow)}
+.dlbtn.hidden{display:none}
+.perm{text-align:center;padding:1rem;color:var(--text-dim);font-size:.82rem;font-family:'Space Mono',monospace}
+.ballw{margin:.9rem auto 0;padding:.55rem 1.4rem;background:var(--amber);color:var(--bg0);border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;display:block}
+.live-row{display:flex;align-items:center;gap:.65rem;margin-bottom:.85rem}
+.live-label{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase}
+.live-label.on{color:var(--amber)}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--bg3);border-radius:999px;border:1px solid var(--border);transition:background .2s}
+.toggle input:checked~.toggle-track{background:var(--amber-dim);border-color:var(--amber)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:var(--text-dim);transition:transform .2s,background .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(16px);background:#fff}
+</style>
+</head>
+<body>
+<header><span class="logo">ECHO</span><span class="logo-sub">voice studio</span></header>
+<div class="app">
+
+  <div class="panel">
+    <div class="live-row">
+      <div class="plabel" style="margin-bottom:0">recorder</div>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:.55rem">
+        <span class="live-label" id="liveLabel">live off</span>
+        <label class="toggle" title="Toggle live monitor">
+          <input type="checkbox" id="liveToggle" onchange="setLive(this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </span>
+    </div>
+    <div id="permWrap" class="perm" style="display:none">
+      Microphone access needed
+      <button class="ballw" onclick="requestMic()">Allow microphone</button>
+    </div>
+    <canvas id="waveform"></canvas>
+    <div class="transport">
+      <button class="btn-rec" id="btnRec" onclick="toggleRecord()"><div class="rdot"></div></button>
+      <span class="spill" id="spill">idle</span>
+      <button class="bsm" id="btnPlay" onclick="togglePlay()" disabled>▶ play</button>
+      <a class="dlbtn hidden" id="dlBtn">↓ save</a>
+      <button class="bsm del" id="btnClear" onclick="clearRec()" disabled>✕</button>
+      <span class="timer" id="timer">00:00</span>
+    </div>
+    <div class="pb-row" id="pbRow">
+      <input type="range" id="pbSlider" min="0" max="1000" value="0" step="1" oninput="seekTo(this.value)">
+      <span class="pb-time" id="pbTime">0:00 / 0:00</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="plabel">echo fx</div>
+    <div class="echo-grid">
+      <div class="kwrap"><span class="klabel">delay</span><canvas class="kcanvas" id="kn-delay" width="72" height="72"></canvas><span class="kval" id="kv-delay">320ms</span></div>
+      <div class="kwrap"><span class="klabel">feedback</span><canvas class="kcanvas" id="kn-feedback" width="72" height="72"></canvas><span class="kval" id="kv-feedback">45%</span></div>
+      <div class="kwrap"><span class="klabel">mix</span><canvas class="kcanvas" id="kn-mix" width="72" height="72"></canvas><span class="kval" id="kv-mix">40%</span></div>
+    </div>
+  </div>
+
+
+</div>
+
+<footer style="margin-top:2rem;font-family:'Space Mono',monospace;font-size:.6rem;color:#4a4845;letter-spacing:.08em;text-align:center">
+  crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com" style="color:#6a6460;text-decoration:none;border-bottom:1px solid #3a3835">Jayadev</a>
+</footer>
+
+<script>
+// Audio nodes
+let AC=null,mic=null,micSrc=null,analyser=null;
+let delay=null,fbGain=null,wetG=null,dryG=null,masterG=null,monG=null,streamDst=null;
+let recorder=null,chunks=[],recording=false,playing=false;
+let blob=null,pbSrc=null,pbBuf=null,pbStartAC=0,pbOffset=0,pbInterval=null;
+let tickInterval=null,secs=0,micOk=false,liveMode=false;
+
+
+const KN={
+  delay:{v:.32,min:.05,max:1.2,unit:'ms',m:1000,dp:0},
+  feedback:{v:.20,min:0,max:.85,unit:'%',m:100,dp:0},
+  mix:{v:.20,min:0,max:1,unit:'%',m:100,dp:0}
+};
+
+
+function initAC(){
+  if(AC)return;
+  AC=new(window.AudioContext||window.webkitAudioContext)();
+  analyser=AC.createAnalyser();analyser.fftSize=1024;
+  delay=AC.createDelay(2);delay.delayTime.value=KN.delay.v;
+  fbGain=AC.createGain();fbGain.gain.value=KN.feedback.v;
+  wetG=AC.createGain();wetG.gain.value=KN.mix.v;
+  dryG=AC.createGain();dryG.gain.value=1-KN.mix.v;
+  masterG=AC.createGain();masterG.gain.value=.85;
+  // monG sits between analyser and destination — muted during recording
+  // so mic bleed through speakers is completely eliminated
+  monG=AC.createGain();monG.gain.value=0;
+  streamDst=AC.createMediaStreamDestination();
+
+  delay.connect(fbGain);fbGain.connect(delay);
+  delay.connect(wetG);wetG.connect(masterG);
+  dryG.connect(masterG);
+  masterG.connect(analyser);
+  analyser.connect(monG);
+  monG.connect(AC.destination);   // ← speaker output, silenced during rec
+  masterG.connect(streamDst);     // ← recording stream, always on
+}
+
+async function requestMic(){
+  try{
+    initAC();
+    const s=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    micSrc=AC.createMediaStreamSource(s);
+    micSrc.connect(dryG);micSrc.connect(delay);
+    micOk=true;
+    document.getElementById('permWrap').style.display='none';
+    drawWave();setupRec();
+  }catch(e){alert('Mic access denied.');}
+}
+
+function setupRec(){
+  recorder=new MediaRecorder(streamDst.stream);
+  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+  recorder.onstop=doneRec;
+}
+
+function toggleRecord(){
+  if(!micOk){requestMic();return;}
+  if(AC.state==='suspended')AC.resume();
+  if(!recording)startRec();else stopRec();
+}
+
+function setLive(on){
+  liveMode=on;
+  const lbl=document.getElementById('liveLabel');
+  lbl.textContent=on?'live on':'live off';
+  lbl.className='live-label'+(on?' on':'');
+  if(!monG||recording)return;
+  monG.gain.setTargetAtTime(on?1:0,AC.currentTime,.05);
+}
+
+function startRec(){
+  chunks=[];recording=true;secs=0;
+  // Kill speaker monitoring — prevents mic picking up its own output
+  monG.gain.setTargetAtTime(0,AC.currentTime,.015);
+  setupRec();recorder.start(100);
+  document.getElementById('btnRec').classList.add('on');
+  document.getElementById('spill').textContent='● rec';
+  document.getElementById('spill').className='spill rec';
+  document.getElementById('timer').classList.add('on');
+  tickInterval=setInterval(()=>{
+    secs++;
+    document.getElementById('timer').textContent=
+      String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0');
+  },1000);
+}
+
+function stopRec(){
+  recording=false;
+  monG.gain.setTargetAtTime(liveMode?1:0,AC.currentTime,.05);
+  recorder.stop();clearInterval(tickInterval);
+  document.getElementById('btnRec').classList.remove('on');
+}
+
+function doneRec(){
+  blob=new Blob(chunks,{type:'audio/webm'});
+  document.getElementById('spill').textContent='ready';
+  document.getElementById('spill').className='spill ready';
+  document.getElementById('btnPlay').disabled=false;
+  document.getElementById('btnClear').disabled=false;
+  document.getElementById('pbRow').style.display='flex';
+  const dl=document.getElementById('dlBtn');
+  dl.href=URL.createObjectURL(blob);dl.download='echo.webm';dl.classList.remove('hidden');
+}
+
+function togglePlay(){
+  if(!blob)return;
+  if(playing)stopPlay();else startPlay(pbBuf?pbBuf.duration*(document.getElementById('pbSlider').value/1000):0);
+}
+
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0')}
+
+async function startPlay(fromOffset){
+  if(!blob)return;
+  if(AC.state==='suspended')AC.resume();
+  if(!pbBuf)pbBuf=await AC.decodeAudioData(await blob.arrayBuffer());
+  const off=fromOffset||0;
+  playing=true;
+  document.getElementById('btnPlay').textContent='■ stop';
+  document.getElementById('btnPlay').classList.add('on');
+  pbSrc=AC.createBufferSource();pbSrc.buffer=pbBuf;
+  // Route through analyser so spectrum lights up during playback
+  pbSrc.connect(analyser);
+  pbSrc.connect(AC.destination);
+  pbStartAC=AC.currentTime;pbOffset=off;
+  pbSrc.start(0,off);
+  pbSrc.onended=()=>{
+    if(playing){
+      playing=false;
+      document.getElementById('btnPlay').textContent='▶ play';
+      document.getElementById('btnPlay').classList.remove('on');
+      document.getElementById('pbSlider').value=0;
+      document.getElementById('pbTime').textContent='0:00 / '+fmt(pbBuf.duration);
+      clearInterval(pbInterval);
+    }
+  };
+  clearInterval(pbInterval);
+  pbInterval=setInterval(()=>{
+    if(!playing||!pbBuf)return;
+    const elapsed=off+(AC.currentTime-pbStartAC);
+    const pct=Math.min(elapsed/pbBuf.duration,1);
+    document.getElementById('pbSlider').value=Math.round(pct*1000);
+    document.getElementById('pbTime').textContent=fmt(elapsed)+' / '+fmt(pbBuf.duration);
+  },80);
+}
+
+function stopPlay(){
+  clearInterval(pbInterval);
+  try{pbSrc&&pbSrc.stop();}catch(e){}
+  playing=false;
+  document.getElementById('btnPlay').textContent='▶ play';
+  document.getElementById('btnPlay').classList.remove('on');
+}
+
+function seekTo(val){
+  if(!pbBuf)return;
+  const off=pbBuf.duration*(val/1000);
+  if(playing){stopPlay();startPlay(off);}
+  else{
+    document.getElementById('pbTime').textContent=fmt(off)+' / '+fmt(pbBuf.duration);
+  }
+}
+
+function clearRec(){
+  stopPlay();blob=null;pbBuf=null;chunks=[];secs=0;
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('timer').classList.remove('on');
+  document.getElementById('btnPlay').disabled=true;
+  document.getElementById('btnClear').disabled=true;
+  document.getElementById('dlBtn').classList.add('hidden');
+  document.getElementById('pbRow').style.display='none';
+  document.getElementById('pbSlider').value=0;
+  document.getElementById('pbTime').textContent='0:00 / 0:00';
+  document.getElementById('spill').textContent='idle';
+  document.getElementById('spill').className='spill';
+}
+
+// LED Spectrum Analyser
+const peaks=[];
+function drawWave(){
+  const cv=document.getElementById('waveform');
+  const ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
+  analyser.fftSize=1024;
+  analyser.smoothingTimeConstant=.75;
+
+  const LW=7,LH=3,GAP=1,COL_GAP=2; // LED dims
+  const STEP=LH+GAP;         // px per LED row
+  const CSTEP=LW+COL_GAP;    // px per column
+
+  (function draw(){
+    requestAnimationFrame(draw);
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0e0e0f';ctx.fillRect(0,0,W,H);
+
+    const ROWS=Math.floor(H/STEP);
+    const COLS=Math.floor(W/CSTEP);
+
+    if(!analyser){
+      // draw dead grid
+      for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+        ctx.fillStyle='#1a1a1c';
+        ctx.fillRect(c*CSTEP,H-(r+1)*STEP,LW,LH);
+      }
+      return;
+    }
+
+    // Only animate when there's something to show
+    const active = (liveMode && micOk) || recording || playing;
+    if(!active){
+      for(let c=0;c<COLS;c++){
+        peaks[c]=0;
+        for(let r=0;r<ROWS;r++){
+          const pct=r/ROWS;
+          ctx.fillStyle=pct>.82?'rgba(226,75,74,.06)':pct>.62?'rgba(239,159,39,.06)':'rgba(62,200,122,.05)';
+          ctx.fillRect(c*CSTEP,H-(r+1)*STEP,LW,LH);
+        }
+      }
+      return;
+    }
+
+    const freq=new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(freq);
+
+    // Log-spaced bin grouping
+    const nyq=analyser.frequencyBinCount;
+    if(peaks.length!==COLS)peaks.length=0;
+    while(peaks.length<COLS)peaks.push(0);
+
+    for(let c=0;c<COLS;c++){
+      // Log scale: map column to frequency bin
+      const f0=Math.pow(nyq,c/COLS);
+      const f1=Math.pow(nyq,(c+1)/COLS);
+      const lo=Math.max(0,Math.floor(f0));
+      const hi=Math.min(nyq-1,Math.ceil(f1));
+      let sum=0,cnt=0;
+      for(let i=lo;i<=hi;i++){sum+=freq[i];cnt++;}
+      const avg=cnt?sum/cnt:0;
+      const lit=Math.round((avg/255)*ROWS);
+
+      // Peak hold with slow decay
+      if(lit>peaks[c])peaks[c]=lit;
+      else peaks[c]=Math.max(0,peaks[c]-.12);
+
+      for(let r=0;r<ROWS;r++){
+        const x=c*CSTEP;
+        const y=H-(r+1)*STEP;
+        const pct=r/ROWS;
+
+        // Determine LED color by row position
+        let onColor,offColor;
+        if(pct>.82){onColor='#E24B4A';offColor='rgba(226,75,74,.06)';}
+        else if(pct>.62){onColor='#EF9F27';offColor='rgba(239,159,39,.06)';}
+        else{onColor='#3EC87A';offColor='rgba(62,200,122,.05)';}
+
+        if(r<lit){
+          // Lit LED — slight brightness variation for depth
+          ctx.globalAlpha=.85+.15*(r/ROWS);
+          ctx.fillStyle=onColor;
+        } else {
+          ctx.globalAlpha=1;
+          ctx.fillStyle=offColor;
+        }
+        ctx.fillRect(x,y,LW,LH);
+      }
+
+      // Peak dot
+      const pr=Math.floor(peaks[c]);
+      if(pr>0&&pr<ROWS){
+        const pct2=pr/ROWS;
+        ctx.globalAlpha=1;
+        ctx.fillStyle=pct2>.82?'#ff6b6a':pct2>.62?'#ffc14e':'#6fefaa';
+        ctx.fillRect(c*CSTEP,H-(pr+1)*STEP,LW,LH);
+      }
+    }
+    ctx.globalAlpha=1;
+  })();
+}
+
+// Knobs
+function drawKnob(id,v,min,max){
+  const cv=document.getElementById('kn-'+id);if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2,r=26;
+  ctx.clearRect(0,0,W,H);
+  const sa=Math.PI*.75,ea=Math.PI*2.25,angle=sa+(v-min)/(max-min)*(ea-sa);
+  ctx.beginPath();ctx.arc(cx,cy,r,sa,ea);ctx.strokeStyle='#28282d';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,sa,angle);ctx.strokeStyle='#EF9F27';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke();
+  const nx=cx+Math.cos(angle)*(r-8),ny=cy+Math.sin(angle)*(r-8);
+  ctx.beginPath();ctx.arc(nx,ny,3,0,Math.PI*2);ctx.fillStyle='#EF9F27';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#1e1e21';ctx.fill();
+  ctx.strokeStyle='#28282d';ctx.lineWidth=1.5;ctx.stroke();
+}
+
+function updateKnob(id){
+  const k=KN[id];
+  document.getElementById('kv-'+id).textContent=(k.v*k.m).toFixed(k.dp)+k.unit;
+  drawKnob(id,k.v,k.min,k.max);
+  if(!delay)return;
+  if(id==='delay')delay.delayTime.value=k.v;
+  if(id==='feedback')fbGain.gain.value=k.v;
+  if(id==='mix'){wetG.gain.value=k.v;dryG.gain.value=1-k.v*.5;}
+}
+
+function setupKnob(id){
+  const cv=document.getElementById('kn-'+id);const k=KN[id];
+  let drag=false,sy=0,sv=0;
+  cv.addEventListener('mousedown',e=>{drag=true;sy=e.clientY;sv=k.v;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!drag)return;k.v=Math.max(k.min,Math.min(k.max,sv+(sy-e.clientY)/100*(k.max-k.min)));updateKnob(id);});
+  window.addEventListener('mouseup',()=>drag=false);
+  cv.addEventListener('wheel',e=>{e.preventDefault();k.v=Math.max(k.min,Math.min(k.max,k.v-e.deltaY/400*(k.max-k.min)));updateKnob(id);},{passive:false});
+  cv.addEventListener('touchstart',e=>{drag=true;sy=e.touches[0].clientY;sv=k.v;e.preventDefault();},{passive:false});
+  window.addEventListener('touchmove',e=>{if(!drag)return;k.v=Math.max(k.min,Math.min(k.max,sv+(sy-e.touches[0].clientY)/100*(k.max-k.min)));updateKnob(id);});
+  window.addEventListener('touchend',()=>drag=false);
+  updateKnob(id);
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  setupKnob('delay');setupKnob('feedback');setupKnob('mix');
+  document.getElementById('waveform').width=document.getElementById('waveform').offsetWidth;
+  navigator.permissions&&navigator.permissions.query({name:'microphone'}).then(r=>{
+    if(r.state==='granted')requestMic();
+    else document.getElementById('permWrap').style.display='block';
+  }).catch(()=>document.getElementById('permWrap').style.display='block');
+});
+</script>
+</body>
+</html>
