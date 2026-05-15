@@ -433,7 +433,7 @@ const KN={
 function initAC(){
   if(AC)return;
   AC=new(window.AudioContext||window.webkitAudioContext)();
-  analyser=AC.createAnalyser();analyser.fftSize=1024;
+  analyser=AC.createAnalyser();analyser.fftSize=256;
   delay=AC.createDelay(2);delay.delayTime.value=KN.delay.v;
   fbGain=AC.createGain();fbGain.gain.value=KN.feedback.v;
   wetG=AC.createGain();wetG.gain.value=KN.mix.v;
@@ -598,10 +598,10 @@ function drawWave(){
   const cv=document.getElementById('waveform');
   const ctx=cv.getContext('2d');
   cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
-  analyser.fftSize=1024;
-  analyser.smoothingTimeConstant=.78;
+  analyser.fftSize=256;
+  analyser.smoothingTimeConstant=.88;
 
-  const LW=6,LH=3,VGAP=1,HGAP=2;
+  const LW=14,LH=4,VGAP=2,HGAP=4;
   const STEP=LH+VGAP;
   const CSTEP=LW+HGAP;
 
@@ -620,7 +620,7 @@ function drawWave(){
     ctx.fillStyle='#161412';ctx.fillRect(0,0,W,H);
 
     const ROWS=Math.floor(H/STEP);
-    const COLS=Math.floor(W/CSTEP);
+    const COLS=Math.min(24,Math.floor(W/CSTEP));
 
     const active=recording||playing;
     if(!active||!analyser){
