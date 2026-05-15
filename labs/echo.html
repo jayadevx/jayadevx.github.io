@@ -8,9 +8,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --cream:#F0EBE1;
-  --cream2:#E8E2D8;
-  --cream3:#DDD7CC;
+  --cream:#FFFFFF;
+  --cream2:#F5F2EE;
+  --cream3:#EAE6E0;
   --ink:#1C1A18;
   --ink2:#3A3733;
   --ink-faint:rgba(28,26,24,0.12);
@@ -412,7 +412,7 @@ body{
   <!-- Footer -->
   <div class="device-footer">
     <span class="footer-credit">crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com">Jayadev</a></span>
-    <span class="footer-ver">v20260515-1430</span>
+    <span class="footer-ver">v20260515-1503</span>
   </div>
 
 </div>
@@ -477,7 +477,8 @@ function toggleRecord(){
 
 function startRec(){
   chunks=[];recording=true;secs=0;
-  setupRec();recorder.start(100);
+  setupRec();recorder.start(1000);
+  startSpectrum();
   document.getElementById('btnRec').classList.add('on');
   setChip('● rec','rec');
   setDot('rec');
@@ -494,6 +495,7 @@ function stopRec(){
   recorder.stop();clearInterval(tickInterval);
   document.getElementById('btnRec').classList.remove('on');
   setDot('');
+  stopSpectrum();
 }
 
 function doneRec(){
@@ -530,9 +532,11 @@ async function startPlay(fromOffset){
   pbStartAC=AC.currentTime;
   pbSrc.start(0,off);
   monG.gain.setTargetAtTime(1,AC.currentTime,.02);
+  startSpectrum();
   pbSrc.onended=()=>{
     if(playing){
       playing=false;
+      stopSpectrum();
       monG.gain.setTargetAtTime(0,AC.currentTime,.05);
       document.getElementById('btnPlay').textContent='▶ play';
       document.getElementById('btnPlay').classList.remove('on');
@@ -556,6 +560,7 @@ function stopPlay(){
   clearInterval(pbInterval);
   try{pbSrc&&pbSrc.stop();}catch(e){}
   playing=false;
+  stopSpectrum();
   monG.gain.setTargetAtTime(0,AC.currentTime,.05);
   document.getElementById('btnPlay').textContent='▶ play';
   document.getElementById('btnPlay').classList.remove('on');
@@ -594,91 +599,87 @@ function setDot(cls){
 
 // ── LED Spectrum ──
 const peaks=[];
+let rafId=null,frameCount=0;
+
+function startSpectrum(){if(!rafId)rafId=requestAnimationFrame(spectrumLoop);}
+function stopSpectrum(){if(rafId){cancelAnimationFrame(rafId);rafId=null;}drawDeadGrid();}
+
+function drawDeadGrid(){
+  const cv=document.getElementById('waveform');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.fillStyle='#161412';ctx.fillRect(0,0,W,H);
+  const STEP=6,CSTEP=18,COLS=Math.min(24,Math.floor(W/CSTEP)),ROWS=Math.floor(H/STEP);
+  for(let c=0;c<COLS;c++){peaks[c]=0;for(let r=0;r<ROWS;r++){
+    const pct=r/ROWS;
+    ctx.fillStyle=pct>.82?'#2a1010':pct>.62?'#1f1500':'#0a1f12';
+    ctx.fillRect(c*CSTEP,H-(r+1)*STEP,14,4);
+  }}
+}
+
+function spectrumLoop(){
+  rafId=requestAnimationFrame(spectrumLoop);
+  // Throttle to ~24fps — skip every other frame
+  frameCount++;if(frameCount%2!==0)return;
+
+  const cv=document.getElementById('waveform');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+
+  const LW=14,LH=4,VGAP=2,HGAP=4;
+  const STEP=LH+VGAP,CSTEP=LW+HGAP;
+  const ROWS=Math.floor(H/STEP);
+  const COLS=Math.min(24,Math.floor(W/CSTEP));
+
+  ctx.fillStyle='#161412';ctx.fillRect(0,0,W,H);
+
+  const freq=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freq);
+  const nyq=analyser.frequencyBinCount;
+  if(peaks.length!==COLS){peaks.length=0;while(peaks.length<COLS)peaks.push(0);}
+
+  // Peak frequency readout — update every 6 frames (~4x/sec) to avoid DOM thrash
+  if(frameCount%6===0){
+    let pBin=0,pVal=0;
+    for(let i=0;i<freq.length;i++){if(freq[i]>pVal){pVal=freq[i];pBin=i;}}
+    const hz=Math.round(pBin*(AC.sampleRate/2)/nyq);
+    document.getElementById('dispFreq').textContent=hz>0?hz+' hz':'— hz';
+  }
+
+  for(let c=0;c<COLS;c++){
+    const f0=Math.pow(nyq,c/COLS),f1=Math.pow(nyq,(c+1)/COLS);
+    const lo=Math.max(0,Math.floor(f0)),hi=Math.min(nyq-1,Math.ceil(f1));
+    let sum=0,cnt=0;
+    for(let i=lo;i<=hi;i++){sum+=freq[i];cnt++;}
+    const lit=Math.round((cnt?sum/cnt:0)/255*ROWS);
+
+    if(lit>peaks[c])peaks[c]=lit;
+    else peaks[c]=Math.max(0,peaks[c]-.1);
+
+    for(let r=0;r<ROWS;r++){
+      const pct=r/ROWS;
+      if(r<lit){
+        ctx.fillStyle=pct>.82?'#E84040':pct>.62?'#F5A020':'#3AE07A';
+      } else {
+        ctx.fillStyle=pct>.82?'#2a1010':pct>.62?'#1f1500':'#0a1f12';
+      }
+      ctx.fillRect(c*CSTEP,H-(r+1)*STEP,LW,LH);
+    }
+    const pr=Math.floor(peaks[c]);
+    if(pr>0&&pr<ROWS){
+      const p2=pr/ROWS;
+      ctx.fillStyle=p2>.82?'#ff7070':p2>.62?'#ffc050':'#70ffaa';
+      ctx.fillRect(c*CSTEP,H-(pr+1)*STEP,LW,LH);
+    }
+  }
+}
+
 function drawWave(){
   const cv=document.getElementById('waveform');
-  const ctx=cv.getContext('2d');
   cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
   analyser.fftSize=256;
   analyser.smoothingTimeConstant=.88;
-
-  const LW=14,LH=4,VGAP=2,HGAP=4;
-  const STEP=LH+VGAP;
-  const CSTEP=LW+HGAP;
-
-  // TE-palette LEDs on dark screen
-  const ACTIVE_GREEN='#3AE07A';
-  const ACTIVE_AMBER='#F5A020';
-  const ACTIVE_RED='#E84040';
-  const DEAD_GREEN='rgba(58,224,122,.05)';
-  const DEAD_AMBER='rgba(245,160,32,.05)';
-  const DEAD_RED='rgba(232,64,64,.05)';
-
-  (function draw(){
-    requestAnimationFrame(draw);
-    const W=cv.width,H=cv.height;
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#161412';ctx.fillRect(0,0,W,H);
-
-    const ROWS=Math.floor(H/STEP);
-    const COLS=Math.min(24,Math.floor(W/CSTEP));
-
-    const active=recording||playing;
-    if(!active||!analyser){
-      for(let c=0;c<COLS;c++){
-        peaks[c]=0;
-        for(let r=0;r<ROWS;r++){
-          const pct=r/ROWS;
-          ctx.fillStyle=pct>.82?DEAD_RED:pct>.62?DEAD_AMBER:DEAD_GREEN;
-          ctx.fillRect(c*CSTEP,H-(r+1)*STEP,LW,LH);
-        }
-      }
-      return;
-    }
-
-    const freq=new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(freq);
-    const nyq=analyser.frequencyBinCount;
-    if(peaks.length!==COLS){peaks.length=0;while(peaks.length<COLS)peaks.push(0);}
-
-    let peakFreqBin=0,peakFreqVal=0;
-    for(let i=0;i<freq.length;i++){if(freq[i]>peakFreqVal){peakFreqVal=freq[i];peakFreqBin=i;}}
-    const hz=Math.round(peakFreqBin*(AC.sampleRate/2)/nyq);
-    document.getElementById('dispFreq').textContent=hz>0?hz+' hz':'— hz';
-
-    for(let c=0;c<COLS;c++){
-      const f0=Math.pow(nyq,c/COLS);
-      const f1=Math.pow(nyq,(c+1)/COLS);
-      const lo=Math.max(0,Math.floor(f0));
-      const hi=Math.min(nyq-1,Math.ceil(f1));
-      let sum=0,cnt=0;
-      for(let i=lo;i<=hi;i++){sum+=freq[i];cnt++;}
-      const avg=cnt?sum/cnt:0;
-      const lit=Math.round((avg/255)*ROWS);
-
-      if(lit>peaks[c])peaks[c]=lit;
-      else peaks[c]=Math.max(0,peaks[c]-.1);
-
-      for(let r=0;r<ROWS;r++){
-        const x=c*CSTEP,y=H-(r+1)*STEP;
-        const pct=r/ROWS;
-        let onC,offC;
-        if(pct>.82){onC=ACTIVE_RED;offC=DEAD_RED;}
-        else if(pct>.62){onC=ACTIVE_AMBER;offC=DEAD_AMBER;}
-        else{onC=ACTIVE_GREEN;offC=DEAD_GREEN;}
-        ctx.globalAlpha=r<lit?(.8+.2*(r/ROWS)):1;
-        ctx.fillStyle=r<lit?onC:offC;
-        ctx.fillRect(x,y,LW,LH);
-      }
-      const pr=Math.floor(peaks[c]);
-      if(pr>0&&pr<ROWS){
-        const pct2=pr/ROWS;
-        ctx.globalAlpha=1;
-        ctx.fillStyle=pct2>.82?'#ff7070':pct2>.62?'#ffc050':'#70ffaa';
-        ctx.fillRect(c*CSTEP,H-(pr+1)*STEP,LW,LH);
-      }
-    }
-    ctx.globalAlpha=1;
-  })();
+  drawDeadGrid();
 }
 
 // ── TE Knobs ──
