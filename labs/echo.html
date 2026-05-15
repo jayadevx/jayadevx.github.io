@@ -28,7 +28,7 @@
 }
 
 body{
-  background:#000000;
+  background:var(--cream);
   font-family:'Space Mono',monospace;
   color:var(--ink);
   min-height:100vh;
@@ -412,16 +412,29 @@ body{
   <!-- Footer -->
   <div class="device-footer">
     <span class="footer-credit">crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com">Jayadev</a></span>
-    <span class="footer-ver">v20260515-1510</span>
+    <span class="footer-ver">v20260515-1520</span>
   </div>
 
 </div>
 <script>
+// ── AudioWorklet source (runs on audio thread, not main thread) ──
+const WORKLET_SRC = `
+class CaptureProcessor extends AudioWorkletProcessor {
+  process(inputs) {
+    const ch = inputs[0]?.[0];
+    if (ch) this.port.postMessage(ch.slice(0));
+    return true;
+  }
+}
+registerProcessor('capture-processor', CaptureProcessor);
+`;
+
 // Audio nodes
-let AC=null,mic=null,micSrc=null,analyser=null;
-let delay=null,fbGain=null,wetG=null,dryG=null,masterG=null,monG=null,streamDst=null,rawDest=null;
-let recorder=null,chunks=[],recording=false,playing=false;
-let blob=null,pbSrc=null,pbBuf=null,pbStartAC=0,pbOffset=0,pbInterval=null;
+let AC=null,micSrc=null,analyser=null;
+let delay=null,fbGain=null,wetG=null,dryG=null,masterG=null,monG=null;
+let captureNode=null,pcmChunks=[],sampleRate=44100;
+let recording=false,playing=false;
+let blob=null,pbSrc=null,pbBuf=null,pbStartAC=0,pbInterval=null;
 let tickInterval=null,secs=0,micOk=false;
 
 const KN={
@@ -430,9 +443,17 @@ const KN={
   mix:      {v:.15, min:0,   max:1,   unit:'%',  m:100,  dp:0}
 };
 
-function initAC(){
+async function initAC(){
   if(AC)return;
   AC=new(window.AudioContext||window.webkitAudioContext)();
+  sampleRate=AC.sampleRate;
+
+  // Load AudioWorklet from inline blob — runs on audio rendering thread
+  const blob=new Blob([WORKLET_SRC],{type:'application/javascript'});
+  const url=URL.createObjectURL(blob);
+  await AC.audioWorklet.addModule(url);
+  URL.revokeObjectURL(url);
+
   analyser=AC.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.88;
   delay=AC.createDelay(2);delay.delayTime.value=KN.delay.v;
   fbGain=AC.createGain();fbGain.gain.value=KN.feedback.v;
@@ -446,27 +467,25 @@ function initAC(){
   masterG.connect(analyser);
   analyser.connect(monG);
   monG.connect(AC.destination);
-  rawDest=AC.createMediaStreamDestination();
-  streamDst=rawDest;
+
+  // Capture node — audio thread posts PCM chunks to main thread
+  captureNode=new AudioWorkletNode(AC,'capture-processor');
+  captureNode.port.onmessage=e=>{
+    if(recording) pcmChunks.push(new Float32Array(e.data));
+  };
 }
 
 async function requestMic(){
   try{
-    initAC();
+    await initAC();
     const s=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
     micSrc=AC.createMediaStreamSource(s);
-    micSrc.connect(rawDest);
-    micSrc.connect(analyser);
+    micSrc.connect(captureNode);  // audio thread capture — zero main thread cost
+    micSrc.connect(analyser);     // spectrum viz only
     micOk=true;
     document.getElementById('permWrap').style.display='none';
-    drawWave();setupRec();
-  }catch(e){alert('Mic access denied.');}
-}
-
-function setupRec(){
-  recorder=new MediaRecorder(rawDest.stream);
-  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
-  recorder.onstop=doneRec;
+    drawWave();
+  }catch(e){alert('Mic access denied: '+e.message);}
 }
 
 function toggleRecord(){
@@ -476,12 +495,9 @@ function toggleRecord(){
 }
 
 function startRec(){
-  chunks=[];recording=true;secs=0;
-  setupRec();recorder.start(1000);
-  // No spectrum animation during recording — keeps main thread free for audio capture
+  pcmChunks=[];recording=true;secs=0;
   document.getElementById('btnRec').classList.add('on');
-  setChip('● rec','rec');
-  setDot('rec');
+  setChip('● rec','rec');setDot('rec');
   document.getElementById('timer').classList.add('on');
   tickInterval=setInterval(()=>{
     secs++;
@@ -492,20 +508,43 @@ function startRec(){
 
 function stopRec(){
   recording=false;
-  recorder.stop();clearInterval(tickInterval);
+  clearInterval(tickInterval);
   document.getElementById('btnRec').classList.remove('on');
   setDot('');
+  // Encode collected Float32 PCM → WAV on a small delay so last worklet messages arrive
+  setTimeout(()=>{ blob=encodeWAV(pcmChunks,sampleRate); doneRec(); }, 120);
+}
+
+// ── WAV encoder — no codec, no browser involvement ──
+function encodeWAV(chunks,sr){
+  const total=chunks.reduce((n,c)=>n+c.length,0);
+  const buf=new ArrayBuffer(44+total*2);
+  const v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF'); v.setUint32(4,36+total*2,true);
+  ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true);  // PCM
+  v.setUint16(22,1,true);                            // mono
+  v.setUint32(24,sr,true);
+  v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,total*2,true);
+  let off=44;
+  for(const ch of chunks){
+    for(const s of ch){
+      const x=Math.max(-1,Math.min(1,s));
+      v.setInt16(off,x<0?x*0x8000:x*0x7FFF,true); off+=2;
+    }
+  }
+  return new Blob([buf],{type:'audio/wav'});
 }
 
 function doneRec(){
-  blob=new Blob(chunks,{type:'audio/webm'});
-  setChip('ready','ready');
-  setDot('ready');
+  setChip('ready','ready');setDot('ready');
   document.getElementById('btnPlay').disabled=false;
   document.getElementById('btnClear').disabled=false;
   document.getElementById('pbRow').classList.add('show');
   const dl=document.getElementById('dlBtn');
-  dl.href=URL.createObjectURL(blob);dl.download='echo.webm';
+  dl.href=URL.createObjectURL(blob);dl.download='echo.wav';
   dl.classList.add('show');
 }
 
@@ -534,15 +573,13 @@ async function startPlay(fromOffset){
   startSpectrum();
   pbSrc.onended=()=>{
     if(playing){
-      playing=false;
-      stopSpectrum();
+      playing=false;stopSpectrum();
       monG.gain.setTargetAtTime(0,AC.currentTime,.05);
       document.getElementById('btnPlay').textContent='▶ play';
       document.getElementById('btnPlay').classList.remove('on');
       document.getElementById('pbSlider').value=0;
       document.getElementById('pbTime').textContent='0:00 / '+fmt(pbBuf.duration);
-      setDot('ready');
-      clearInterval(pbInterval);
+      setDot('ready');clearInterval(pbInterval);
     }
   };
   clearInterval(pbInterval);
@@ -558,8 +595,7 @@ async function startPlay(fromOffset){
 function stopPlay(){
   clearInterval(pbInterval);
   try{pbSrc&&pbSrc.stop();}catch(e){}
-  playing=false;
-  stopSpectrum();
+  playing=false;stopSpectrum();
   monG.gain.setTargetAtTime(0,AC.currentTime,.05);
   document.getElementById('btnPlay').textContent='▶ play';
   document.getElementById('btnPlay').classList.remove('on');
@@ -574,7 +610,7 @@ function seekTo(val){
 }
 
 function clearRec(){
-  stopPlay();blob=null;pbBuf=null;chunks=[];secs=0;
+  stopPlay();blob=null;pbBuf=null;pcmChunks=[];secs=0;
   document.getElementById('timer').textContent='00:00';
   document.getElementById('timer').classList.remove('on');
   document.getElementById('btnPlay').disabled=true;
@@ -583,8 +619,7 @@ function clearRec(){
   document.getElementById('pbRow').classList.remove('show');
   document.getElementById('pbSlider').value=0;
   document.getElementById('pbTime').textContent='0:00 / 0:00';
-  setChip('idle','');
-  setDot('');
+  setChip('idle','');setDot('');
 }
 
 function setChip(txt,cls){
@@ -749,10 +784,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   setupKnob('delay');setupKnob('feedback');setupKnob('mix');
   const cv=document.getElementById('waveform');
   cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
-  navigator.permissions&&navigator.permissions.query({name:'microphone'}).then(r=>{
-    if(r.state==='granted')requestMic();
-    else document.getElementById('permWrap').style.display='block';
-  }).catch(()=>document.getElementById('permWrap').style.display='block');
+  drawDeadGrid();
+  document.getElementById('permWrap').style.display='block';
 });
 </script>
 </body>
