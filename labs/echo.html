@@ -28,7 +28,7 @@
 }
 
 body{
-  background:var(--cream);
+  background:#000000;
   font-family:'Space Mono',monospace;
   color:var(--ink);
   min-height:100vh;
@@ -412,7 +412,7 @@ body{
   <!-- Footer -->
   <div class="device-footer">
     <span class="footer-credit">crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com">Jayadev</a></span>
-    <span class="footer-ver">v20260515-1503</span>
+    <span class="footer-ver">v20260515-1510</span>
   </div>
 
 </div>
@@ -433,7 +433,7 @@ const KN={
 function initAC(){
   if(AC)return;
   AC=new(window.AudioContext||window.webkitAudioContext)();
-  analyser=AC.createAnalyser();analyser.fftSize=256;
+  analyser=AC.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.88;
   delay=AC.createDelay(2);delay.delayTime.value=KN.delay.v;
   fbGain=AC.createGain();fbGain.gain.value=KN.feedback.v;
   wetG=AC.createGain();wetG.gain.value=KN.mix.v;
@@ -478,7 +478,7 @@ function toggleRecord(){
 function startRec(){
   chunks=[];recording=true;secs=0;
   setupRec();recorder.start(1000);
-  startSpectrum();
+  // No spectrum animation during recording — keeps main thread free for audio capture
   document.getElementById('btnRec').classList.add('on');
   setChip('● rec','rec');
   setDot('rec');
@@ -495,7 +495,6 @@ function stopRec(){
   recorder.stop();clearInterval(tickInterval);
   document.getElementById('btnRec').classList.remove('on');
   setDot('');
-  stopSpectrum();
 }
 
 function doneRec(){
@@ -599,9 +598,9 @@ function setDot(cls){
 
 // ── LED Spectrum ──
 const peaks=[];
-let rafId=null,frameCount=0;
+let rafId=null,frameCount=0,freqData=null; // pre-allocated — no GC pressure
 
-function startSpectrum(){if(!rafId)rafId=requestAnimationFrame(spectrumLoop);}
+function startSpectrum(){if(!rafId){frameCount=0;rafId=requestAnimationFrame(spectrumLoop);}}
 function stopSpectrum(){if(rafId){cancelAnimationFrame(rafId);rafId=null;}drawDeadGrid();}
 
 function drawDeadGrid(){
@@ -619,8 +618,9 @@ function drawDeadGrid(){
 
 function spectrumLoop(){
   rafId=requestAnimationFrame(spectrumLoop);
-  // Throttle to ~24fps — skip every other frame
-  frameCount++;if(frameCount%2!==0)return;
+  frameCount++;
+  // 20fps cap — skip 2 of every 3 frames, no canvas work on skipped frames
+  if(frameCount%3!==0)return;
 
   const cv=document.getElementById('waveform');if(!cv)return;
   const ctx=cv.getContext('2d');
@@ -633,15 +633,17 @@ function spectrumLoop(){
 
   ctx.fillStyle='#161412';ctx.fillRect(0,0,W,H);
 
-  const freq=new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(freq);
   const nyq=analyser.frequencyBinCount;
+  // Reuse pre-allocated array — zero GC pressure
+  if(!freqData||freqData.length!==nyq)freqData=new Uint8Array(nyq);
+  analyser.getByteFrequencyData(freqData);
+
   if(peaks.length!==COLS){peaks.length=0;while(peaks.length<COLS)peaks.push(0);}
 
-  // Peak frequency readout — update every 6 frames (~4x/sec) to avoid DOM thrash
-  if(frameCount%6===0){
+  // Hz readout every 9 frames (~2x/sec) — minimal DOM writes
+  if(frameCount%9===0){
     let pBin=0,pVal=0;
-    for(let i=0;i<freq.length;i++){if(freq[i]>pVal){pVal=freq[i];pBin=i;}}
+    for(let i=0;i<nyq;i++){if(freqData[i]>pVal){pVal=freqData[i];pBin=i;}}
     const hz=Math.round(pBin*(AC.sampleRate/2)/nyq);
     document.getElementById('dispFreq').textContent=hz>0?hz+' hz':'— hz';
   }
@@ -650,7 +652,7 @@ function spectrumLoop(){
     const f0=Math.pow(nyq,c/COLS),f1=Math.pow(nyq,(c+1)/COLS);
     const lo=Math.max(0,Math.floor(f0)),hi=Math.min(nyq-1,Math.ceil(f1));
     let sum=0,cnt=0;
-    for(let i=lo;i<=hi;i++){sum+=freq[i];cnt++;}
+    for(let i=lo;i<=hi;i++){sum+=freqData[i];cnt++;}
     const lit=Math.round((cnt?sum/cnt:0)/255*ROWS);
 
     if(lit>peaks[c])peaks[c]=lit;
@@ -658,11 +660,8 @@ function spectrumLoop(){
 
     for(let r=0;r<ROWS;r++){
       const pct=r/ROWS;
-      if(r<lit){
-        ctx.fillStyle=pct>.82?'#E84040':pct>.62?'#F5A020':'#3AE07A';
-      } else {
-        ctx.fillStyle=pct>.82?'#2a1010':pct>.62?'#1f1500':'#0a1f12';
-      }
+      ctx.fillStyle=r<lit?(pct>.82?'#E84040':pct>.62?'#F5A020':'#3AE07A')
+                        :(pct>.82?'#2a1010':pct>.62?'#1f1500':'#0a1f12');
       ctx.fillRect(c*CSTEP,H-(r+1)*STEP,LW,LH);
     }
     const pr=Math.floor(peaks[c]);
@@ -677,8 +676,6 @@ function spectrumLoop(){
 function drawWave(){
   const cv=document.getElementById('waveform');
   cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
-  analyser.fftSize=256;
-  analyser.smoothingTimeConstant=.88;
   drawDeadGrid();
 }
 
@@ -715,7 +712,7 @@ function drawKnob(id,v,min,max){
   ctx.beginPath();ctx.arc(cx,cy,R-7,0,Math.PI*2);
   ctx.strokeStyle='rgba(28,26,24,0.18)';ctx.lineWidth=1;ctx.stroke();
 
-  // Indicator dot — black
+  // Indicator dot
   const nx=cx+Math.cos(angle)*(R-14),ny=cy+Math.sin(angle)*(R-14);
   ctx.beginPath();ctx.arc(nx,ny,3,0,Math.PI*2);
   ctx.fillStyle='#1C1A18';ctx.fill();
