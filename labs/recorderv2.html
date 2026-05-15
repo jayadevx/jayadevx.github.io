@@ -140,7 +140,7 @@ audio.show{display:block;}
     </div>
   </div>
 
-  <span class="credit">crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com">Jayadev</a> · v20260515-1555</span>
+  <span class="credit">crafted with ♥ by <a href="mailto:mv.jayadev@gmail.com">Jayadev</a> · v20260515-1600</span>
 </div>
 
 <script>
@@ -265,7 +265,7 @@ document.getElementById('player').onended=()=>{
 };
 
 // ── Echo — AudioContext only exists during playback ──
-let AC=null,delay=null,fbGain=null,wetG=null,dryG=null,masterG=null;
+let AC=null,comp=null,delay=null,fbGain=null,wetG=null,dryG=null,masterG=null;
 
 const KN={
   delay:    {v:.32, min:.05, max:1.2, unit:'ms', m:1000, dp:0},
@@ -276,11 +276,25 @@ const KN={
 function initAC(){
   if(AC)return;
   AC=new(window.AudioContext||window.webkitAudioContext)();
+
+  // Voice-tuned compressor — smooths level variation without pumping
+  comp=AC.createDynamicsCompressor();
+  comp.threshold.value=-24;  // start compressing at -24dB
+  comp.knee.value=12;        // soft knee for natural transition
+  comp.ratio.value=3;        // 3:1 — gentle, not squashed
+  comp.attack.value=0.012;   // 12ms — catches transients without clicks
+  comp.release.value=0.18;   // 180ms — natural-sounding recovery
+
   delay=AC.createDelay(2);       delay.delayTime.value=KN.delay.v;
   fbGain=AC.createGain();        fbGain.gain.value=KN.feedback.v;
   wetG=AC.createGain();          wetG.gain.value=KN.mix.v;
   dryG=AC.createGain();          dryG.gain.value=1-KN.mix.v*0.5;
-  masterG=AC.createGain();       masterG.gain.value=0.9;
+  masterG=AC.createGain();       masterG.gain.value=1.2; // makeup gain after compression
+
+  // Compressor feeds both dry and delay paths
+  comp.connect(dryG);
+  comp.connect(delay);
+
   delay.connect(fbGain); fbGain.connect(delay);
   delay.connect(wetG);   wetG.connect(masterG);
   dryG.connect(masterG); masterG.connect(AC.destination);
@@ -301,8 +315,7 @@ function playRec(){
   blob.arrayBuffer().then(buf=>AC.decodeAudioData(buf)).then(audioBuf=>{
     const src=AC.createBufferSource();
     src.buffer=audioBuf;
-    src.connect(dryG);
-    src.connect(delay);
+    src.connect(comp);  // source → compressor → (dry + delay)
     src.start();
     document.getElementById('btnPlay').textContent='■ stop';
     src.onended=()=>{ document.getElementById('btnPlay').textContent='▶ play'; };
