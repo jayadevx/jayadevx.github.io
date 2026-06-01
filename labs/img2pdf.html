@@ -1,175 +1,271 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Images → PDF</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --ink: var(--color-text-primary);
-    --muted: var(--color-text-secondary);
-    --faint: var(--color-text-tertiary);
-    --surface: var(--color-background-primary);
-    --raised: var(--color-background-secondary);
-    --border: var(--color-border-tertiary);
-    --border-md: var(--color-border-secondary);
-    --accent: #1D9E75;
-    --accent-light: #E1F5EE;
-    --accent-dark: #085041;
-    --mono: 'DM Mono', monospace;
-    --sans: 'DM Sans', var(--font-sans);
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #f5f5f3;
+    color: #1a1a18;
+    min-height: 100vh;
+    padding: 2rem 1rem;
   }
 
-  body { font-family: var(--sans); }
-
-  .app { padding: 1.5rem 0 2rem; max-width: 660px; }
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e0dfd8;
+    padding: 2rem;
+  }
 
   .header { margin-bottom: 1.5rem; }
-  .header h1 { font-size: 18px; font-weight: 500; color: var(--ink); letter-spacing: -0.3px; }
-  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a18;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.3px;
+  }
+  .header h1 i { font-size: 20px; color: #1D9E75; }
+  .header p { font-size: 13px; color: #666662; margin-top: 4px; }
 
+  /* Drop zone */
   .drop-zone {
-    border: 1.5px dashed var(--border-md);
-    border-radius: var(--border-radius-lg);
+    border: 2px dashed #c8c7c0;
+    border-radius: 12px;
     padding: 2.5rem 1.5rem;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    background: var(--surface);
+    background: #fafaf8;
     position: relative;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 1.25rem;
   }
   .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-light);
+    border-color: #1D9E75;
+    background: #f0faf6;
   }
   .drop-zone input[type="file"] {
     position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
   }
-  .drop-icon { font-size: 28px; color: var(--accent); margin-bottom: 8px; }
-  .drop-zone h2 { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
-  .drop-zone p { font-size: 12px; color: var(--muted); }
+  .drop-zone .drop-icon { font-size: 32px; color: #1D9E75; display: block; margin-bottom: 8px; }
+  .drop-zone h2 { font-size: 14px; font-weight: 600; color: #1a1a18; margin-bottom: 4px; }
+  .drop-zone p { font-size: 12px; color: #888884; }
 
+  /* Controls */
   .controls {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin: 1rem 0;
+    margin-bottom: 1.25rem;
   }
-
   .control-box {
-    background: var(--raised);
-    border-radius: var(--border-radius-md);
+    background: #f5f5f3;
+    border-radius: 10px;
     padding: 10px 12px;
+    border: 1px solid #e8e8e2;
   }
-  .control-box label { display: block; font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .control-box select, .control-box input[type="number"] {
-    width: 100%; font-size: 13px; font-weight: 500; padding: 5px 8px; border-radius: 6px;
-    border: 0.5px solid var(--border-md); background: var(--surface); color: var(--ink);
-    font-family: var(--sans);
+  .control-box label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #888884;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+  }
+  .control-box select,
+  .control-box input[type="number"] {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a18;
+    background: #ffffff;
+    border: 1px solid #d8d8d2;
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .control-box select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; }
+  .control-box select:focus,
+  .control-box input[type="number"]:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    color: #888884;
+    margin-bottom: 10px;
+    display: none;
   }
 
+  /* Image grid */
   .images-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 8px;
-    margin: 1rem 0;
+    margin-bottom: 1rem;
   }
-
   .img-thumb {
     position: relative;
     aspect-ratio: 1;
-    border-radius: var(--border-radius-md);
+    border-radius: 10px;
     overflow: hidden;
-    border: 0.5px solid var(--border);
-    background: var(--raised);
+    border: 1px solid #e0dfd8;
+    background: #f5f5f3;
     cursor: grab;
+    transition: transform 0.1s;
   }
-  .img-thumb.dragging { opacity: 0.4; }
-  .img-thumb.drag-target { outline: 2px solid var(--accent); }
-
+  .img-thumb:active { cursor: grabbing; }
+  .img-thumb.dragging { opacity: 0.35; transform: scale(0.95); }
+  .img-thumb.drag-target { outline: 2px solid #1D9E75; outline-offset: 1px; }
   .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
   .img-thumb .remove-btn {
     position: absolute; top: 4px; right: 4px;
     width: 20px; height: 20px;
-    background: rgba(0,0,0,0.55); border: none; border-radius: 50%;
-    color: #fff; font-size: 12px; cursor: pointer;
+    background: rgba(0,0,0,0.6); border: none; border-radius: 50%;
+    color: #fff; font-size: 11px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.12s;
+    line-height: 1;
   }
   .img-thumb:hover .remove-btn { opacity: 1; }
-
   .img-thumb .seq {
     position: absolute; bottom: 4px; left: 5px;
-    font-size: 10px; font-family: var(--mono);
+    font-size: 10px;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
     color: #fff;
-    background: rgba(0,0,0,0.45);
-    border-radius: 3px; padding: 1px 4px;
-    line-height: 1.4;
+    background: rgba(0,0,0,0.5);
+    border-radius: 4px; padding: 1px 5px; line-height: 1.5;
   }
 
-  .status-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 12px; color: var(--muted); margin-bottom: 10px;
-    font-family: var(--mono);
+  /* Preview */
+  .preview-section { margin-bottom: 1.25rem; display: none; }
+  .preview-section .label {
+    font-size: 10px; font-weight: 600; color: #888884;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    margin-bottom: 8px;
   }
-
-  .actions { display: flex; gap: 8px; }
-
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: var(--border-radius-md);
-    font-size: 13px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border-md);
-    background: var(--surface); color: var(--ink); font-family: var(--sans);
-    transition: background 0.12s, transform 0.08s;
+  .page-preview-wrap {
+    background: #f0f0ec;
+    border-radius: 10px;
+    padding: 10px;
+    display: inline-block;
   }
-  .btn:hover { background: var(--raised); }
-  .btn:active { transform: scale(0.97); }
-  .btn.primary {
-    background: var(--accent); color: #fff; border-color: var(--accent-dark);
+  .page-preview-inner {
+    background: #ffffff;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    position: relative;
   }
-  .btn.primary:hover { background: #158a64; }
-  .btn.primary:disabled { background: var(--raised); color: var(--muted); border-color: var(--border); cursor: not-allowed; transform: none; }
+  .pp-grid { display: grid; padding: 8px; }
+  .pp-cell {
+    background: #ece9e2;
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pp-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+  /* Progress */
   .progress-wrap {
-    height: 3px; background: var(--raised); border-radius: 2px; overflow: hidden;
-    margin: 8px 0; display: none;
+    height: 4px; background: #f0f0ec;
+    border-radius: 2px; overflow: hidden;
+    margin: 10px 0; display: none;
   }
   .progress-bar {
-    height: 100%; background: var(--accent); border-radius: 2px;
+    height: 100%; background: #1D9E75;
+    border-radius: 2px; width: 0%;
     transition: width 0.2s;
-    width: 0%;
   }
 
-  .empty-hint {
-    text-align: center; padding: 2rem 0; color: var(--faint);
-    font-size: 13px; display: none;
+  /* Actions */
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: 9px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid #d8d8d2;
+    background: #ffffff; color: #1a1a18;
+    font-family: inherit;
+    transition: background 0.12s, transform 0.08s, border-color 0.12s;
   }
+  .btn i { font-size: 15px; }
+  .btn:hover { background: #f5f5f3; border-color: #bbbbb5; }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary {
+    background: #1D9E75; color: #ffffff;
+    border-color: #158a64;
+    font-weight: 600;
+  }
+  .btn.primary:hover { background: #179165; }
+  .btn.primary:disabled {
+    background: #f0f0ec; color: #aaa; border-color: #e0dfd8;
+    cursor: not-allowed; transform: none;
+  }
+  .done-msg {
+    font-size: 12px; color: #1D9E75;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    display: none;
+  }
+
+  /* Empty hint */
+  .empty-hint {
+    text-align: center; padding: 1.5rem;
+    color: #aaaaaa; font-size: 13px;
+  }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid #e8e8e2; margin: 1.25rem 0; }
+
+  /* Footer */
+  .footer { margin-top: 1.5rem; font-size: 11px; color: #bbbbb5; text-align: center; }
 </style>
+</head>
+<body>
 
 <div class="app">
-  <h2 class="sr-only">Image to PDF converter — upload images, set layout, download PDF</h2>
-
   <div class="header">
-    <h1><i class="ti ti-photo-up" aria-hidden="true" style="font-size:18px;vertical-align:-2px;margin-right:6px;color:var(--accent)"></i>images → pdf</h1>
-    <p>Upload images, choose how many per page, download a PDF.</p>
+    <h1><i class="ti ti-photo-up"></i> Images → PDF</h1>
+    <p>Upload images, set layout, and download a clean PDF. Drag thumbnails to reorder.</p>
   </div>
 
   <div class="drop-zone" id="dropZone">
-    <input type="file" accept="image/*" multiple id="fileInput" aria-label="Upload images">
-    <div class="drop-icon"><i class="ti ti-cloud-upload" aria-hidden="true"></i></div>
+    <input type="file" accept="image/*" multiple id="fileInput">
+    <i class="ti ti-cloud-upload drop-icon"></i>
     <h2>Drop images here or click to browse</h2>
-    <p>JPEG, PNG, WebP, GIF — any order, drag to reorder</p>
+    <p>JPEG · PNG · WebP · GIF — any number of files</p>
   </div>
 
   <div class="controls">
     <div class="control-box">
-      <label>images / page</label>
-      <input type="number" id="perPage" value="2" min="1" max="12">
+      <label>Images / page</label>
+      <input type="number" id="perPage" value="2" min="1" max="16" step="1">
     </div>
     <div class="control-box">
-      <label>page size</label>
+      <label>Page size</label>
       <select id="pageSize">
         <option value="a4">A4</option>
         <option value="letter">Letter</option>
@@ -177,7 +273,7 @@
       </select>
     </div>
     <div class="control-box">
-      <label>orientation</label>
+      <label>Orientation</label>
       <select id="orientation">
         <option value="portrait">Portrait</option>
         <option value="landscape">Landscape</option>
@@ -185,14 +281,24 @@
     </div>
   </div>
 
-  <div class="status-bar" id="statusBar" style="display:none">
+  <div class="status-bar" id="statusBar">
     <span id="imgCount">0 images</span>
     <span id="pageCount">0 pages</span>
   </div>
 
   <div class="images-grid" id="imagesGrid"></div>
-
   <div class="empty-hint" id="emptyHint">No images yet — upload some above.</div>
+
+  <div class="preview-section" id="previewSection">
+    <div class="label">Page layout preview</div>
+    <div class="page-preview-wrap">
+      <div class="page-preview-inner" id="pvInner">
+        <div class="pp-grid" id="ppGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
 
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-bar" id="progressBar"></div>
@@ -200,210 +306,250 @@
 
   <div class="actions">
     <button class="btn" id="clearBtn" style="display:none" onclick="clearAll()">
-      <i class="ti ti-trash" aria-hidden="true"></i> clear all
+      <i class="ti ti-trash"></i> Clear all
     </button>
     <button class="btn primary" id="generateBtn" disabled onclick="generatePDF()">
-      <i class="ti ti-file-download" aria-hidden="true"></i> generate PDF
+      <i class="ti ti-file-download"></i> Generate PDF
     </button>
+    <span class="done-msg" id="doneMsg"></span>
   </div>
+
+  <div class="footer">v20260531-1200 · runs entirely in your browser, no uploads</div>
 </div>
 
 <script>
-  const fileInput = document.getElementById('fileInput');
-  const dropZone = document.getElementById('dropZone');
-  const imagesGrid = document.getElementById('imagesGrid');
-  const generateBtn = document.getElementById('generateBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const statusBar = document.getElementById('statusBar');
-  const imgCountEl = document.getElementById('imgCount');
-  const pageCountEl = document.getElementById('pageCount');
-  const progressWrap = document.getElementById('progressWrap');
-  const progressBar = document.getElementById('progressBar');
-  const emptyHint = document.getElementById('emptyHint');
-  const perPageInput = document.getElementById('perPage');
-  const pageSizeSelect = document.getElementById('pageSize');
-  const orientationSelect = document.getElementById('orientation');
+const fileInput    = document.getElementById('fileInput');
+const dropZone     = document.getElementById('dropZone');
+const imagesGrid   = document.getElementById('imagesGrid');
+const generateBtn  = document.getElementById('generateBtn');
+const clearBtn     = document.getElementById('clearBtn');
+const statusBar    = document.getElementById('statusBar');
+const imgCountEl   = document.getElementById('imgCount');
+const pageCountEl  = document.getElementById('pageCount');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar  = document.getElementById('progressBar');
+const emptyHint    = document.getElementById('emptyHint');
+const previewSec   = document.getElementById('previewSection');
+const pvInner      = document.getElementById('pvInner');
+const ppGrid       = document.getElementById('ppGrid');
+const doneMsg      = document.getElementById('doneMsg');
+const perPageInput = document.getElementById('perPage');
+const pageSizeEl   = document.getElementById('pageSize');
+const orientEl     = document.getElementById('orientation');
 
-  let images = [];
-  let dragSrcIdx = null;
+let images = [];
+let dragSrcIdx = null;
 
-  fileInput.addEventListener('change', e => handleFiles(e.target.files));
+fileInput.addEventListener('change', e => loadFiles(e.target.files));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); loadFiles(e.dataTransfer.files); });
 
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault(); dropZone.classList.remove('drag-over');
-    handleFiles(e.dataTransfer.files);
+[perPageInput, pageSizeEl, orientEl].forEach(el => {
+  el.addEventListener('change', () => { updateStatus(); renderPreview(); });
+});
+perPageInput.addEventListener('input', () => { updateStatus(); renderPreview(); });
+
+function loadFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  let n = 0;
+  arr.forEach(f => {
+    const r = new FileReader();
+    r.onload = e => {
+      images.push({ src: e.target.result, name: f.name });
+      n++;
+      if (n === arr.length) render();
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function render() {
+  imagesGrid.innerHTML = '';
+  images.forEach((img, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'img-thumb';
+    thumb.draggable = true;
+    thumb.dataset.idx = i;
+
+    const imgEl = document.createElement('img');
+    imgEl.src = img.src;
+    imgEl.alt = img.name;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.innerHTML = '✕';
+    removeBtn.title = 'Remove';
+    removeBtn.onclick = e => { e.stopPropagation(); images.splice(i, 1); render(); };
+
+    const seq = document.createElement('div');
+    seq.className = 'seq';
+    seq.textContent = i + 1;
+
+    thumb.append(imgEl, removeBtn, seq);
+
+    thumb.addEventListener('dragstart', () => { dragSrcIdx = i; thumb.classList.add('dragging'); });
+    thumb.addEventListener('dragend', () => { thumb.classList.remove('dragging'); clearDragTargets(); });
+    thumb.addEventListener('dragover', e => { e.preventDefault(); clearDragTargets(); thumb.classList.add('drag-target'); });
+    thumb.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        [images[dragSrcIdx], images[i]] = [images[i], images[dragSrcIdx]];
+        render();
+      }
+    });
+
+    imagesGrid.appendChild(thumb);
   });
 
-  perPageInput.addEventListener('input', updateStatus);
-  pageSizeSelect.addEventListener('change', updateStatus);
-  orientationSelect.addEventListener('change', updateStatus);
+  const has = images.length > 0;
+  emptyHint.style.display  = has ? 'none' : 'block';
+  statusBar.style.display  = has ? 'flex' : 'none';
+  clearBtn.style.display   = has ? 'inline-flex' : 'none';
+  generateBtn.disabled     = !has;
+  updateStatus();
+  renderPreview();
+}
 
-  function handleFiles(files) {
-    const toLoad = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (!toLoad.length) return;
-    let loaded = 0;
-    toLoad.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        images.push({ src: e.target.result, name: file.name });
-        loaded++;
-        if (loaded === toLoad.length) renderGrid();
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+function clearDragTargets() {
+  document.querySelectorAll('.img-thumb.drag-target').forEach(el => el.classList.remove('drag-target'));
+}
 
-  function renderGrid() {
-    imagesGrid.innerHTML = '';
-    images.forEach((img, i) => {
-      const thumb = document.createElement('div');
-      thumb.className = 'img-thumb';
-      thumb.draggable = true;
-      thumb.dataset.idx = i;
+function updateStatus() {
+  const pp = Math.max(1, parseInt(perPageInput.value) || 1);
+  const pages = images.length > 0 ? Math.ceil(images.length / pp) : 0;
+  imgCountEl.textContent = `${images.length} image${images.length !== 1 ? 's' : ''}`;
+  pageCountEl.textContent = `→ ${pages} page${pages !== 1 ? 's' : ''}`;
+}
 
-      const imgEl = document.createElement('img');
-      imgEl.src = img.src;
-      imgEl.alt = img.name;
+function renderPreview() {
+  if (!images.length) { previewSec.style.display = 'none'; return; }
+  const pp   = Math.max(1, Math.min(16, parseInt(perPageInput.value) || 2));
+  const land = orientEl.value === 'landscape';
+  const cols = Math.ceil(Math.sqrt(pp));
+  const rows = Math.ceil(pp / cols);
+  const W    = 200;
+  const H    = Math.round(land ? W / 1.414 : W * 1.414);
+  const pad  = 8, gap = 3;
+  const cw   = (W - pad * 2 - gap * (cols - 1)) / cols;
+  const ch   = (H - pad * 2 - gap * (rows - 1)) / rows;
 
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'remove-btn';
-      removeBtn.innerHTML = '<i class="ti ti-x" aria-hidden="true"></i>';
-      removeBtn.setAttribute('aria-label', `Remove image ${i+1}`);
-      removeBtn.onclick = (e) => { e.stopPropagation(); removeImage(i); };
+  pvInner.style.width  = W + 'px';
+  pvInner.style.height = H + 'px';
+  ppGrid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},${cw}px);grid-template-rows:repeat(${rows},${ch}px);gap:${gap}px;padding:${pad}px`;
+  ppGrid.innerHTML = '';
 
-      const seq = document.createElement('div');
-      seq.className = 'seq';
-      seq.textContent = i + 1;
-
-      thumb.appendChild(imgEl);
-      thumb.appendChild(removeBtn);
-      thumb.appendChild(seq);
-
-      thumb.addEventListener('dragstart', () => { dragSrcIdx = i; thumb.classList.add('dragging'); });
-      thumb.addEventListener('dragend', () => { thumb.classList.remove('dragging'); clearDragTargets(); });
-      thumb.addEventListener('dragover', e => { e.preventDefault(); clearDragTargets(); thumb.classList.add('drag-target'); });
-      thumb.addEventListener('drop', e => { e.preventDefault(); swapImages(dragSrcIdx, i); });
-
-      imagesGrid.appendChild(thumb);
-    });
-
-    updateStatus();
-    emptyHint.style.display = images.length === 0 ? 'block' : 'none';
-    statusBar.style.display = images.length > 0 ? 'flex' : 'none';
-    clearBtn.style.display = images.length > 0 ? 'inline-flex' : 'none';
-    generateBtn.disabled = images.length === 0;
-  }
-
-  function clearDragTargets() {
-    document.querySelectorAll('.drag-target').forEach(el => el.classList.remove('drag-target'));
-  }
-
-  function swapImages(a, b) {
-    if (a === null || a === b) return;
-    [images[a], images[b]] = [images[b], images[a]];
-    renderGrid();
-  }
-
-  function removeImage(i) {
-    images.splice(i, 1);
-    renderGrid();
-  }
-
-  function clearAll() {
-    images = [];
-    fileInput.value = '';
-    renderGrid();
-  }
-
-  function updateStatus() {
-    const perPage = Math.max(1, parseInt(perPageInput.value) || 1);
-    const pages = images.length > 0 ? Math.ceil(images.length / perPage) : 0;
-    imgCountEl.textContent = `${images.length} image${images.length !== 1 ? 's' : ''}`;
-    pageCountEl.textContent = `→ ${pages} page${pages !== 1 ? 's' : ''}`;
-  }
-
-  async function generatePDF() {
-    if (!images.length) return;
-    const perPage = Math.max(1, Math.min(12, parseInt(perPageInput.value) || 2));
-    const pageSize = pageSizeSelect.value;
-    const orientation = orientationSelect.value;
-
-    generateBtn.disabled = true;
-    progressWrap.style.display = 'block';
-    progressBar.style.width = '5%';
-
-    await new Promise(r => setTimeout(r, 40));
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation, unit: 'mm', format: pageSize });
-
-    const pageDims = doc.internal.pageSize;
-    const PW = pageDims.getWidth();
-    const PH = pageDims.getHeight();
-    const margin = 8;
-    const gap = 4;
-
-    const cols = Math.ceil(Math.sqrt(perPage));
-    const rows = Math.ceil(perPage / cols);
-    const cellW = (PW - margin * 2 - gap * (cols - 1)) / cols;
-    const cellH = (PH - margin * 2 - gap * (rows - 1)) / rows;
-
-    const total = images.length;
-
-    for (let i = 0; i < total; i++) {
-      const posInPage = i % perPage;
-      if (posInPage === 0 && i !== 0) doc.addPage();
-
-      const col = posInPage % cols;
-      const row = Math.floor(posInPage / cols);
-      const x = margin + col * (cellW + gap);
-      const y = margin + row * (cellH + gap);
-
-      await new Promise(r => setTimeout(r, 0));
-
-      try {
-        const imgData = images[i].src;
-        const fmt = imgData.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        await new Promise(res => {
-          const img = new Image();
-          img.onload = () => {
-            const iw = img.naturalWidth, ih = img.naturalHeight;
-            const scale = Math.min(cellW * 10 / iw, cellH * 10 / ih);
-            canvas.width = Math.round(iw * scale);
-            canvas.height = Math.round(ih * scale);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            res();
-          };
-          img.src = imgData;
-        });
-
-        const fitted = fitInCell(canvas.width, canvas.height, cellW, cellH);
-        const cx = x + (cellW - fitted.w) / 2;
-        const cy = y + (cellH - fitted.h) / 2;
-
-        doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', cx, cy, fitted.w, fitted.h);
-      } catch(e) { console.warn('img error', e); }
-
-      progressBar.style.width = `${Math.round(((i + 1) / total) * 90 + 5)}%`;
+  for (let i = 0; i < pp; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'pp-cell';
+    cell.style.width  = cw + 'px';
+    cell.style.height = ch + 'px';
+    if (i < images.length) {
+      const im = document.createElement('img');
+      im.src = images[i].src;
+      im.alt = '';
+      cell.appendChild(im);
     }
-
-    progressBar.style.width = '100%';
-    await new Promise(r => setTimeout(r, 200));
-
-    doc.save(`images-${Date.now()}.pdf`);
-
-    generateBtn.disabled = false;
-    progressWrap.style.display = 'none';
-    progressBar.style.width = '0%';
+    ppGrid.appendChild(cell);
   }
 
-  function fitInCell(iw, ih, cw, ch) {
-    const scale = Math.min(cw / iw, ch / ih);
-    return { w: iw * scale, h: ih * scale };
+  previewSec.style.display = 'block';
+}
+
+function clearAll() {
+  images = [];
+  fileInput.value = '';
+  render();
+  previewSec.style.display = 'none';
+}
+
+function showDone(filename) {
+  doneMsg.textContent = `✓ Saved as ${filename}`;
+  doneMsg.style.display = 'inline';
+  setTimeout(() => doneMsg.style.display = 'none', 4000);
+}
+
+async function generatePDF() {
+  if (!images.length) return;
+  const pp          = Math.max(1, Math.min(16, parseInt(perPageInput.value) || 2));
+  const size        = pageSizeEl.value;
+  const orientation = orientEl.value;
+
+  generateBtn.disabled     = true;
+  progressWrap.style.display = 'block';
+  progressBar.style.width    = '4%';
+
+  await new Promise(r => setTimeout(r, 30));
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation, unit: 'mm', format: size });
+  const PW  = doc.internal.pageSize.getWidth();
+  const PH  = doc.internal.pageSize.getHeight();
+
+  const margin = 12;
+  const gap    = 5;
+  const cols   = Math.ceil(Math.sqrt(pp));
+  const rows   = Math.ceil(pp / cols);
+  const cellW  = (PW - margin * 2 - gap * (cols - 1)) / cols;
+  const cellH  = (PH - margin * 2 - gap * (rows - 1)) / rows;
+
+  for (let i = 0; i < images.length; i++) {
+    const posInPage = i % pp;
+    if (posInPage === 0 && i !== 0) doc.addPage();
+
+    const col = posInPage % cols;
+    const row = Math.floor(posInPage / cols);
+    const x   = margin + col * (cellW + gap);
+    const y   = margin + row * (cellH + gap);
+
+    await new Promise(r => setTimeout(r, 0));
+
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx    = canvas.getContext('2d');
+      await new Promise(res => {
+        const im = new Image();
+        im.onload = () => {
+          const iw = im.naturalWidth, ih = im.naturalHeight;
+          const maxPx = 2400;
+          const scale = Math.min(maxPx / iw, maxPx / ih, 1);
+          canvas.width  = Math.round(iw * scale);
+          canvas.height = Math.round(ih * scale);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+          res();
+        };
+        im.src = images[i].src;
+      });
+
+      const nw = canvas.width, nh = canvas.height;
+      const MM_PER_PX = 0.264583;
+      const fw_mm = nw * MM_PER_PX, fh_mm = nh * MM_PER_PX;
+      const scl   = Math.min(cellW / fw_mm, cellH / fh_mm);
+      const fw    = fw_mm * scl, fh = fh_mm * scl;
+      const ox    = x + (cellW - fw) / 2;
+      const oy    = y + (cellH - fh) / 2;
+
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', ox, oy, fw, fh);
+    } catch(e) { console.warn('Image error:', e); }
+
+    progressBar.style.width = Math.round(((i + 1) / images.length) * 92 + 4) + '%';
   }
+
+  progressBar.style.width = '100%';
+  await new Promise(r => setTimeout(r, 150));
+
+  const date     = new Date().toISOString().slice(0, 10);
+  const filename = `images-to-pdf-${date}.pdf`;
+  doc.save(filename);
+
+  generateBtn.disabled       = false;
+  progressWrap.style.display = 'none';
+  progressBar.style.width    = '0%';
+  showDone(filename);
+}
 </script>
+</body>
+</html>
