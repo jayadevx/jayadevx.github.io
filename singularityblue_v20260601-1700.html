@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Singularity Blue — AI Native Business</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,300;1,14..32,400&display=swap" rel="stylesheet"/>
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    const r = p.get('r');
+    if (r) window.history.replaceState(null, null, decodeURIComponent(r));
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:     #0d0d0d;
+      --ink-2:   #3d3d3d;
+      --ink-3:   #8a8a8a;
+      --ink-4:   #c4c4c4;
+      --rule:    #e2e2e2;
+      --rule-2:  #efefef;
+      --bg:      #f5f5f5;
+      --bg-w:    #ffffff;
+      --accent:  #1847f0;
+      --accent-d:#0f35c4;
+      --f:       'Inter', -apple-system, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--f);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       NAV — exact Mistral treatment
+    ══════════════════════════════════════ */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--bg-w);
+      border-bottom: 1px solid var(--rule);
+      display: flex; align-items: stretch;
+      height: 52px;
+    }
+    .nav-logo {
+      display: flex; align-items: center;
+      padding: 0 20px;
+      border-right: 1px solid var(--rule);
+      text-decoration: none; flex-shrink: 0;
+      cursor: pointer;
+    }
+    /* Singularity Blue pixel-mark logo */
+    .sb-mark {
+      display: grid; grid-template-columns: repeat(3, 7px);
+      grid-template-rows: repeat(3, 7px);
+      gap: 1.5px;
+    }
+    .sb-mark span {
+      display: block; border-radius: 1px;
+    }
+    .mk1 { background: var(--accent); }
+    .mk2 { background: #5577f5; }
+    .mk3 { background: #99aaff; }
+    .mk4 { background: #3360f2; }
+    .mk5 { background: var(--accent); }
+    .mk6 { background: #7788f8; }
+    .mk7 { background: #99aaff; }
+    .mk8 { background: #5577f5; }
+    .mk9 { background: #3360f2; }
+
+    .nav-links {
+      display: flex; align-items: stretch;
+      list-style: none; flex: 1;
+    }
+    .nav-links li {
+      border-right: 1px solid var(--rule);
+    }
+    .nav-links a {
+      display: flex; align-items: center;
+      padding: 0 20px; height: 100%;
+      font-size: 0.84rem; font-weight: 400;
+      color: var(--ink); text-decoration: none;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .nav-links a:hover { background: var(--bg); }
+    .nav-links a.active { font-weight: 500; }
+
+    .nav-right {
+      display: flex; align-items: stretch;
+      margin-left: auto;
+    }
+    .nav-start {
+      display: flex; align-items: center;
+      padding: 0 20px;
+      font-size: 0.84rem; font-weight: 400;
+      color: var(--ink); cursor: pointer;
+      border-left: 1px solid var(--rule);
+      white-space: nowrap; background: none; border-top: none; border-bottom: none; border-right: none;
+      transition: background 0.15s;
+    }
+    .nav-start:hover { background: var(--bg); }
+    .nav-cta {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 22px;
+      font-size: 0.84rem; font-weight: 500;
+      color: #fff; background: var(--ink);
+      border: none; cursor: pointer;
+      border-left: 1px solid var(--rule);
+      white-space: nowrap; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: var(--accent); }
+    .nav-cta-arrow { font-size: 0.9rem; }
+
+    .nav-ham {
+      display: none; align-items: center; justify-content: center;
+      width: 52px; height: 52px;
+      background: none; border: none; border-left: 1px solid var(--rule);
+      cursor: pointer; flex-direction: column; gap: 5px;
+    }
+    .nav-ham span {
+      display: block; width: 18px; height: 1.5px;
+      background: var(--ink); transition: all 0.2s;
+    }
+    .nav-ham.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .nav-ham.open span:nth-child(2) { opacity: 0; }
+    .nav-ham.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    .nav-drawer {
+      display: none; position: fixed;
+      top: 52px; left: 0; right: 0; bottom: 0;
+      background: var(--bg-w); z-index: 190;
+      flex-direction: column;
+      border-top: 1px solid var(--rule);
+    }
+    .nav-drawer.open { display: flex; }
+    .d-item {
+      padding: 1.4rem 24px;
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--ink); cursor: pointer;
+      border-bottom: 1px solid var(--rule-2);
+      transition: background 0.15s;
+    }
+    .d-item:hover { background: var(--bg); }
+
+    /* ══════════════════════════════════════
+       PAGE SYSTEM
+    ══════════════════════════════════════ */
+    .page { display: none; }
+    .page.active { display: block; animation: pageIn 0.35s ease; }
+    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ══════════════════════════════════════
+       HOME
+    ══════════════════════════════════════ */
+    #home { display: none; }
+    #home.active { display: block; }
+
+    /* Hero — Mistral split layout */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      min-height: calc(100vh - 52px);
+      border-bottom: 1px solid var(--rule);
+    }
+    .hero-left {
+      padding: 7vw 5vw 5vw 6vw;
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid var(--rule);
+    }
+    .hero-h1 {
+      font-size: clamp(4rem, 9vw, 9.5rem);
+      font-weight: 900;
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      margin-bottom: 0;
+    }
+    .hero-mosaic {
+      margin-top: auto;
+      padding-top: 4vw;
+    }
+    /* pixel mosaic — blue version of Mistral's orange grid */
+    .mosaic-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 3px;
+      aspect-ratio: 8/5;
+      width: 100%;
+    }
+    .mosaic-grid span {
+      display: block;
+      border-radius: 2px;
+    }
+    .mc1  { background: #1847f0; }
+    .mc2  { background: #3360f2; }
+    .mc3  { background: #5577f5; }
+    .mc4  { background: #7799ff; }
+    .mc5  { background: #99aaff; }
+    .mc6  { background: #0f35c4; }
+    .mc7  { background: #001aaa; }
+    .mc8  { background: #1847f0; opacity: 0.6; }
+
+    .hero-label {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3); margin-top: 14px;
+    }
+
+    .hero-right {
+      display: flex; flex-direction: column;
+      background: var(--bg);
+    }
+    .hero-desc {
+      padding: 7vw 3.5vw 3vw;
+      font-size: clamp(1.1rem, 1.8vw, 1.55rem);
+      font-weight: 400;
+      line-height: 1.55;
+      color: var(--ink);
+      flex: 1;
+    }
+    .hero-news {
+      border-top: 1px solid var(--rule);
+    }
+    .hero-news-label {
+      padding: 1rem 2rem 0.5rem;
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .hero-news-item {
+      display: flex; align-items: center;
+      padding: 0.9rem 2rem;
+      border-top: 1px solid var(--rule-2);
+      gap: 1rem; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .hero-news-item:hover { background: var(--bg-w); }
+    .news-thumb {
+      width: 44px; height: 44px; border-radius: 4px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 2px; flex-shrink: 0; overflow: hidden;
+    }
+    .news-thumb span {
+      display: block;
+    }
+    .nt-a { background: var(--accent); }
+    .nt-b { background: #3360f2; }
+    .nt-c { background: #5577f5; }
+    .nt-d { background: #99aaff; }
+    .news-text {
+      font-size: 0.9rem; font-weight: 400;
+      color: var(--ink); line-height: 1.35;
+      flex: 1;
+    }
+    .news-arrow {
+      font-size: 0.85rem; color: var(--ink-3);
+      flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════
+       SHARED
+    ══════════════════════════════════════ */
+    .wrap {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 6vw;
+    }
+    .section {
+      padding: 7vw 6vw;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .sep { border-top: 1px solid var(--rule); }
+
+    .eyebrow {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3); margin-bottom: 2.5rem;
+    }
+    .sec-h {
+      font-size: clamp(2.4rem, 5vw, 5rem);
+      font-weight: 900; line-height: 0.97;
+      letter-spacing: -0.035em;
+      color: var(--ink); margin-bottom: 4rem;
+    }
+    .sec-h em {
+      font-style: normal; color: var(--accent);
+    }
+
+    /* ══════════════════════════════════════
+       ABOUT
+    ══════════════════════════════════════ */
+    .about-body {
+      font-size: 1.15rem; font-weight: 400;
+      line-height: 1.75; color: var(--ink-2);
+      max-width: 760px; margin-bottom: 6rem;
+    }
+    .about-body strong { color: var(--ink); font-weight: 600; }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+      margin-bottom: 6rem;
+    }
+    .pillar {
+      padding: 2.5rem 2rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    .pillar-n {
+      font-size: 0.6rem; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-4); margin-bottom: 1.5rem;
+    }
+    .pillar-h {
+      font-size: 1.05rem; font-weight: 700;
+      color: var(--ink); margin-bottom: 0.8rem;
+      line-height: 1.2; letter-spacing: -0.01em;
+    }
+    .pillar-p {
+      font-size: 0.88rem; font-weight: 400;
+      color: var(--ink-2); line-height: 1.7;
+    }
+
+    .founder-row {
+      display: grid; grid-template-columns: 280px 1fr;
+      gap: 6rem; border-top: 1px solid var(--rule);
+      padding-top: 4rem; align-items: start;
+    }
+    .f-left {}
+    .f-initials {
+      font-size: 4rem; font-weight: 900;
+      color: var(--ink-4); line-height: 1;
+      letter-spacing: -0.04em; margin-bottom: 1.5rem;
+    }
+    .f-name {
+      font-size: 1rem; font-weight: 700;
+      color: var(--ink); margin-bottom: 0.15rem;
+    }
+    .f-role {
+      font-size: 0.78rem; font-weight: 400;
+      color: var(--ink-3); line-height: 1.6;
+    }
+    .f-right {}
+    .f-bio {
+      font-size: 0.98rem; font-weight: 400;
+      color: var(--ink-2); line-height: 1.85;
+      margin-bottom: 1rem;
+    }
+    .f-bio strong { color: var(--ink); font-weight: 600; }
+    .f-tags {
+      display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.5rem;
+    }
+    .f-tag {
+      font-size: 0.72rem; font-weight: 400;
+      color: var(--ink-2);
+      border: 1px solid var(--rule);
+      padding: 0.2rem 0.65rem;
+      background: var(--bg-w);
+    }
+
+    /* ══════════════════════════════════════
+       PRODUCTS
+    ══════════════════════════════════════ */
+    .products-wrap {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+      margin-bottom: 0;
+    }
+    .product-card {
+      padding: 3rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      background: var(--bg-w);
+      transition: background 0.15s;
+    }
+    .product-card:hover { background: var(--bg); }
+    .pc-tag {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-3); margin-bottom: 1.5rem;
+    }
+    .pc-name {
+      font-size: 3rem; font-weight: 900;
+      letter-spacing: -0.04em; line-height: 1;
+      margin-bottom: 0.6rem;
+    }
+    .pn-mesh { color: var(--accent); }
+    .pn-token { color: var(--ink); }
+    .pc-tagline {
+      font-size: 0.92rem; font-weight: 400;
+      color: var(--ink-3); margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+    .pc-desc {
+      font-size: 0.9rem; font-weight: 400;
+      color: var(--ink-2); line-height: 1.8;
+      margin-bottom: 2rem;
+    }
+    .pc-pts { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 2rem; }
+    .pc-pts li {
+      font-size: 0.87rem; color: var(--ink-2);
+      padding-left: 1.2rem; position: relative; line-height: 1.5;
+    }
+    .pc-pts li::before {
+      content: '→'; position: absolute; left: 0;
+      color: var(--accent); font-size: 0.75rem; top: 0.1em;
+    }
+    .pc-stack {
+      font-size: 0.6rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-4);
+      border-top: 1px solid var(--rule-2);
+      padding-top: 1.2rem;
+    }
+    .pc-stack span { color: var(--accent); }
+    .pc-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.6rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-top: 0.7rem;
+    }
+    .sd { width: 5px; height: 5px; border-radius: 50%; }
+    .live-s .sd { background: #18a86b; }
+    .live-s { color: #18a86b; }
+    .dev-s .sd { background: var(--accent); animation: blnk 1.8s ease infinite; }
+    .dev-s { color: var(--accent); }
+    @keyframes blnk { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .together {
+      background: var(--ink);
+      padding: 3rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      grid-column: 1 / -1;
+    }
+    .together-label {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.4); margin-bottom: 1rem;
+    }
+    .together-text {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      font-weight: 400; line-height: 1.65;
+      color: rgba(255,255,255,0.78);
+      max-width: 760px;
+    }
+    .together-text strong { color: #fff; font-weight: 600; }
+
+    /* ══════════════════════════════════════
+       AI APPS
+    ══════════════════════════════════════ */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+    }
+    .app-card {
+      padding: 2.5rem 2rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      background: var(--bg-w);
+      transition: background 0.15s;
+    }
+    .app-card:hover { background: var(--bg); }
+    .app-name {
+      font-size: 1.4rem; font-weight: 800;
+      letter-spacing: -0.025em; color: var(--ink);
+      margin-bottom: 0.3rem; line-height: 1;
+    }
+    .app-stack {
+      font-size: 0.58rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    .app-desc {
+      font-size: 0.87rem; font-weight: 400;
+      color: var(--ink-2); line-height: 1.7;
+    }
+
+    /* ══════════════════════════════════════
+       CONTACT
+    ══════════════════════════════════════ */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+    }
+    .contact-col {
+      padding: 3rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    .contact-col-dark {
+      background: var(--ink);
+      padding: 3rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    .cc-head {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3); margin-bottom: 1.5rem;
+    }
+    .cc-head-lt {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-bottom: 1.5rem;
+    }
+    .cc-body {
+      font-size: 0.95rem; font-weight: 400;
+      color: var(--ink-2); line-height: 1.8; margin-bottom: 2rem;
+    }
+    .cc-body strong { color: var(--ink); font-weight: 600; }
+    .cc-quote {
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
+      font-weight: 400; font-style: italic;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.55;
+      border-left: 2px solid var(--accent);
+      padding-left: 1.2rem;
+    }
+
+    .c-links { display: flex; flex-direction: column; gap: 0; }
+    .c-link {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--rule-2);
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .c-link:first-child { border-top: 1px solid var(--rule-2); }
+    .c-link:hover { opacity: 0.5; }
+    .cl-label {
+      font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .cl-val {
+      font-size: 0.88rem; font-weight: 400;
+      color: var(--ink);
+    }
+    .cl-arr { color: var(--ink-3); font-size: 0.85rem; }
+
+    .contact-tags-row {
+      grid-column: 1/-1;
+      padding: 2rem 3rem;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      align-items: center;
+    }
+    .ctag {
+      font-size: 0.7rem; font-weight: 400;
+      color: var(--ink-3); border: 1px solid var(--rule);
+      padding: 0.2rem 0.7rem; background: var(--bg-w);
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--rule);
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 1rem;
+      padding: 1.5rem 6vw;
+    }
+    .footer-brand {
+      font-size: 0.84rem; font-weight: 700;
+      color: var(--ink); letter-spacing: -0.01em;
+    }
+    .footer-meta {
+      font-size: 0.7rem; font-weight: 400;
+      color: var(--ink-3); letter-spacing: 0.04em;
+    }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 860px) {
+      .nav-links, .nav-start { display: none; }
+      .nav-ham { display: flex; }
+
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 3rem 5vw 2rem; border-right: none; border-bottom: 1px solid var(--rule); }
+      .hero-right { border-top: none; }
+      .hero-h1 { font-size: clamp(3rem, 14vw, 6rem); }
+
+      .pillars { grid-template-columns: 1fr 1fr; }
+      .products-wrap { grid-template-columns: 1fr; }
+      .together { grid-column: 1; }
+      .apps-grid { grid-template-columns: 1fr 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .contact-tags-row { grid-column: 1; }
+      .founder-row { grid-template-columns: 1fr; gap: 2.5rem; }
+      .section { padding: 4rem 5vw; }
+    }
+
+    @media (max-width: 520px) {
+      .pillars, .apps-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a class="nav-logo" onclick="navigate('home')">
+    <div class="sb-mark">
+      <span class="mk1"></span><span class="mk2"></span><span class="mk3"></span>
+      <span class="mk4"></span><span class="mk5"></span><span class="mk6"></span>
+      <span class="mk7"></span><span class="mk8"></span><span class="mk9"></span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a onclick="navigate('home')"     data-page="home">Home</a></li>
+    <li><a onclick="navigate('about')"    data-page="about">About</a></li>
+    <li><a onclick="navigate('products')" data-page="products">Products</a></li>
+    <li><a onclick="navigate('aiapps')"   data-page="aiapps">AI Apps</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="nav-start" onclick="navigate('about')">Who we are</button>
+    <a class="nav-cta" onclick="navigate('contact')">Contact us <span class="nav-cta-arrow">↗</span></a>
+  </div>
+  <button class="nav-ham" id="hamburger" onclick="toggleDrawer()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- DRAWER -->
+<div class="nav-drawer" id="drawer">
+  <div class="d-item" onclick="navDrawer('home')">Home</div>
+  <div class="d-item" onclick="navDrawer('about')">About</div>
+  <div class="d-item" onclick="navDrawer('products')">Products</div>
+  <div class="d-item" onclick="navDrawer('aiapps')">AI Apps</div>
+  <div class="d-item" onclick="navDrawer('contact')">Contact</div>
+</div>
+
+<!-- ══ HOME ══ -->
+<section class="page" id="home">
+  <div class="hero">
+    <!-- LEFT: giant headline + mosaic -->
+    <div class="hero-left">
+      <h1 class="hero-h1">Agentic AI.<br>In your hands.</h1>
+      <div class="hero-mosaic">
+        <div class="mosaic-grid">
+          <span class="mc1"></span><span class="mc3"></span><span class="mc6"></span><span class="mc2"></span><span class="mc4"></span><span class="mc7"></span><span class="mc1"></span><span class="mc5"></span>
+          <span class="mc4"></span><span class="mc1"></span><span class="mc3"></span><span class="mc6"></span><span class="mc1"></span><span class="mc3"></span><span class="mc6"></span><span class="mc2"></span>
+          <span class="mc2"></span><span class="mc5"></span><span class="mc1"></span><span class="mc4"></span><span class="mc7"></span><span class="mc1"></span><span class="mc4"></span><span class="mc8"></span>
+          <span class="mc6"></span><span class="mc2"></span><span class="mc7"></span><span class="mc1"></span><span class="mc5"></span><span class="mc3"></span><span class="mc2"></span><span class="mc1"></span>
+          <span class="mc3"></span><span class="mc4"></span><span class="mc2"></span><span class="mc5"></span><span class="mc1"></span><span class="mc6"></span><span class="mc3"></span><span class="mc4"></span>
+        </div>
+        <div class="hero-label">AI Native Business</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: desc + news -->
+    <div class="hero-right">
+      <div class="hero-desc">
+        We help enterprises build tailored AI systems that move from reactive data operations to <strong style="font-weight:600">autonomous, context-aware action</strong> — using MCP and A2A protocols from day one.
+      </div>
+      <div class="hero-news">
+        <div class="hero-news-label">What we build</div>
+        <div class="hero-news-item" onclick="navigate('products')">
+          <div class="news-thumb"><span class="nt-a"></span><span class="nt-b"></span><span class="nt-c"></span><span class="nt-d"></span></div>
+          <div class="news-text">AI Mesh — multi-agent orchestration on MCP / A2A</div>
+          <div class="news-arrow">›</div>
+        </div>
+        <div class="hero-news-item" onclick="navigate('products')">
+          <div class="news-thumb"><span class="nt-b"></span><span class="nt-d"></span><span class="nt-a"></span><span class="nt-c"></span></div>
+          <div class="news-text">Token Field — proactive context engine for enterprise data</div>
+          <div class="news-arrow">›</div>
+        </div>
+        <div class="hero-news-item" onclick="navigate('about')">
+          <div class="news-thumb"><span class="nt-c"></span><span class="nt-a"></span><span class="nt-d"></span><span class="nt-b"></span></div>
+          <div class="news-text">23+ years. 6 countries. 1.3M+ customers on platforms built.</div>
+          <div class="news-arrow">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ABOUT ══ -->
+<section class="page" id="about">
+  <div class="section">
+    <p class="eyebrow">About</p>
+    <h2 class="sec-h">Built at the<br>intersection of<br><em>everything.</em></h2>
+    <p class="about-body">
+      Singularity Blue is an <strong>applied AI and agentic systems practice</strong> headquartered in Kochi, India — building intelligence infrastructure for enterprises moving beyond dashboards and queries into <strong>autonomous, context-aware operations</strong>. Every engagement is architecture-first. Every product is built for real operational environments, not demos.
+    </p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-n">01</div>
+        <div class="pillar-h">AI Native Business</div>
+        <p class="pillar-p">Not AI bolted onto existing systems. Businesses redesigned from the ground up with AI as the operating model — where agents make decisions and intelligence is structural.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-n">02</div>
+        <div class="pillar-h">Agent Ops</div>
+        <p class="pillar-p">The discipline of operating AI agents at scale — deployment, monitoring, coordination, trust, and governance of autonomous systems in production enterprises.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-n">03</div>
+        <div class="pillar-h">MCP / A2A Native</div>
+        <p class="pillar-p">Built on Model Context Protocol and Agent-to-Agent standards — enabling any LLM to act on enterprise context without brittle integrations or custom glue code.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-n">04</div>
+        <div class="pillar-h">Architecture First</div>
+        <p class="pillar-p">Every engagement begins with a rigorous architecture review. Context before intelligence. Structure before agents. The foundation determines everything.</p>
+      </div>
+    </div>
+
+    <div class="founder-row">
+      <div class="f-left">
+        <div class="f-initials">JV</div>
+        <div class="f-name">Jayadev Vasantham</div>
+        <div class="f-role">Founder<br>Global CTO<br>Singularity Blue</div>
+      </div>
+      <div class="f-right">
+        <p class="f-bio">A technology architect with <strong>23+ years</strong> building enterprise platforms across capital markets, European digital banking, fintech and industrial AI — across 6 countries. Former Global CTO at IndustryApps Singapore and Chief Digital Officer at Geojit Financial Services, where platforms served <strong>1.3 million+ customers</strong>. Earlier at BNP Paribas building award-winning digital banking products across Germany, France, Italy and Belgium.</p>
+        <p class="f-bio">The pattern across every domain has been the same — structuring context so that intelligence can act on it. Singularity Blue is the distillation of that pattern into a focused applied AI practice.</p>
+        <div class="f-tags">
+          <span class="f-tag">Capital Markets</span><span class="f-tag">Digital Banking</span><span class="f-tag">Fintech</span><span class="f-tag">Industrial AI</span><span class="f-tag">Agentic Systems</span><span class="f-tag">MCP / A2A</span><span class="f-tag">Advaita Vedanta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRODUCTS ══ -->
+<section class="page" id="products">
+  <div class="section">
+    <p class="eyebrow">Products</p>
+    <h2 class="sec-h">Two products.<br>One <em>complete</em> stack.</h2>
+    <div class="products-wrap">
+      <div class="product-card">
+        <div class="pc-tag">Agentic Layer</div>
+        <div class="pc-name pn-mesh">AI Mesh</div>
+        <div class="pc-tagline">The intelligence layer that connects, coordinates and acts.</div>
+        <p class="pc-desc">A multi-agent orchestration platform built natively on MCP and A2A protocols. A living mesh of specialist agents that discover each other, coordinate on complex tasks, and act across enterprise systems — without brittle point-to-point integrations.</p>
+        <ul class="pc-pts">
+          <li>Root planner spawns specialist agents dynamically at runtime</li>
+          <li>Tool mesh with runtime discovery — any MCP-compatible tool plugs in</li>
+          <li>A2A agent-to-agent coordination across systems and domains</li>
+          <li>Reactive triggers — event-driven, not query-driven</li>
+          <li>Full Agent Ops observability — trace, audit, govern</li>
+        </ul>
+        <div class="pc-stack">Stack: <span>MCP · A2A · NATS JetStream · LLM-agnostic · Multi-cloud</span></div>
+        <div class="pc-status live-s"><span class="sd"></span>Live · Production</div>
+      </div>
+      <div class="product-card">
+        <div class="pc-tag">Context Layer</div>
+        <div class="pc-name pn-token">Token Field</div>
+        <div class="pc-tagline">The context layer that makes enterprise data agent-ready.</div>
+        <p class="pc-desc">A proactive context and insight engine. Continuously monitors enterprise data fields, surfaces anomalies and patterns automatically — without waiting to be asked — and feeds AI Mesh agents with the right context at the right moment.</p>
+        <ul class="pc-pts">
+          <li>Field excitation model — proactive, not reactive</li>
+          <li>Continuous anomaly intelligence across connected data sources</li>
+          <li>Context packaging for MCP — any LLM can reason on it natively</li>
+          <li>Structured context graph — relationships, not just records</li>
+          <li>Feeds AI Mesh for closed-loop autonomous response</li>
+        </ul>
+        <div class="pc-stack">Stack: <span>Real-time Streaming · Context Graph · MCP · Python · Go</span></div>
+        <div class="pc-status dev-s"><span class="sd"></span>In development</div>
+      </div>
+      <div class="together">
+        <div class="together-label">Together</div>
+        <p class="together-text">Token Field builds the context. AI Mesh acts on it. Together they form the complete stack for an <strong>AI Native Business</strong> — where intelligence is not a layer on top of operations, but the operating model itself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ AI APPS ══ -->
+<section class="page" id="aiapps">
+  <div class="section">
+    <p class="eyebrow">AI Apps</p>
+    <h2 class="sec-h">Built at the edge<br>of <em>what's possible.</em></h2>
+    <div class="apps-grid">
+      <div class="app-card">
+        <div class="app-name">AlphaCorteX</div>
+        <div class="app-stack">Memos · Python · LLM · Self-hosted</div>
+        <p class="app-desc">Personal knowledge intelligence system. LLM-powered wiki — capturing thinking, building connections, externalising the cortex. The second brain, made searchable and queryable.</p>
+      </div>
+      <div class="app-card">
+        <div class="app-name">Folio</div>
+        <div class="app-stack">Claude API · JSON Schema · PWA</div>
+        <p class="app-desc">Equity portfolio tracker with AI narrative intelligence. Annotated holdings schema, real-time insights, investment thesis tracking. Finance meets language models.</p>
+      </div>
+      <div class="app-card">
+        <div class="app-name">DTwinBot</div>
+        <div class="app-stack">BaSyx · AAS · Telegram · Python</div>
+        <p class="app-desc">Telegram bot for managing Asset Administration Shell digital twins via BaSyx. Conversational interface to the digital twin registry. The shell that talks back.</p>
+      </div>
+      <div class="app-card">
+        <div class="app-name">ECHO</div>
+        <div class="app-stack">Web Audio · PWA · OP-1 Aesthetic</div>
+        <p class="app-desc">Voice recorder designed for thought capture. OP-1 aesthetic. Idea velocity matters more than feature density. The tool that thinks like the person using it.</p>
+      </div>
+      <div class="app-card">
+        <div class="app-name">DROP</div>
+        <div class="app-stack">WebRTC · P2P · QR Scanner</div>
+        <p class="app-desc">Serverless peer-to-peer file sharing. No accounts. No uploads. Just two devices and a QR code. The shortest distance between two files.</p>
+      </div>
+      <div class="app-card">
+        <div class="app-name">LAYA</div>
+        <div class="app-stack">Web Audio API · PWA</div>
+        <p class="app-desc">PWA rhythm sequencer built for exploration. Pattern-based, tactile, musical. Built because nothing else quite fitted.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section class="page" id="contact">
+  <div class="section">
+    <p class="eyebrow">Contact</p>
+    <h2 class="sec-h">Build something<br><em>worth</em> building.</h2>
+    <div class="contact-grid">
+      <div class="contact-col">
+        <div class="cc-head">Get in touch</div>
+        <p class="cc-body">Conversations about <strong>AI Native Business transformation</strong>, Agent Ops, agentic systems architecture, and deploying MCP / A2A in production enterprises.<br><br>Headquartered in <strong>Kochi, India</strong>. Active in Singapore and Europe.</p>
+        <div class="c-links">
+          <a class="c-link" href="https://linkedin.com/in/jayadevx" target="_blank">
+            <span class="cl-label">LinkedIn</span>
+            <span class="cl-val">linkedin.com/in/jayadevx</span>
+            <span class="cl-arr">↗</span>
+          </a>
+          <a class="c-link" href="tel:+919400335267">
+            <span class="cl-label">Phone</span>
+            <span class="cl-val">+91 94003 35267</span>
+            <span class="cl-arr">→</span>
+          </a>
+          <a class="c-link" href="mailto:jayadev.vasantham@gmail.com">
+            <span class="cl-label">Email</span>
+            <span class="cl-val">jayadev.vasantham@gmail.com</span>
+            <span class="cl-arr">→</span>
+          </a>
+        </div>
+      </div>
+      <div class="contact-col-dark">
+        <div class="cc-head-lt">The practice</div>
+        <p class="cc-quote">"The future of whatever I did in the past is what Singularity Blue is."</p>
+      </div>
+      <div class="contact-tags-row">
+        <span class="ctag">Applied AI</span>
+        <span class="ctag">Agentic Systems</span>
+        <span class="ctag">Agent Ops</span>
+        <span class="ctag">MCP / A2A</span>
+        <span class="ctag">AI Native Business</span>
+        <span class="ctag">Architecture First</span>
+        <span class="ctag">Kochi · India</span>
+        <span class="ctag">Singapore</span>
+        <span class="ctag">Europe</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-brand">Singularity Blue</span>
+  <span class="footer-meta">AI Native Business · Agent Ops · Kochi · Singapore · v20260601</span>
+</footer>
+
+<script>
+  const ROUTES = { home:'/', about:'/about', products:'/products', aiapps:'/ai-apps', contact:'/contact' };
+  const PATHS  = Object.fromEntries(Object.entries(ROUTES).map(([k,v])=>[v,k]));
+
+  function navigate(page, push=true) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const el = document.getElementById(page);
+    if (el) el.classList.add('active');
+    const lnk = document.querySelector(`.nav-links a[data-page="${page}"]`);
+    if (lnk) lnk.classList.add('active');
+    if (push) window.history.pushState({page}, '', ROUTES[page]||'/');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function resolveCurrentPage() {
+    const path = window.location.pathname.replace(/\/$/,'') || '/';
+    return PATHS[path] || 'home';
+  }
+  window.addEventListener('popstate', e => navigate(e.state?.page || resolveCurrentPage(), false));
+  navigate(resolveCurrentPage(), false);
+
+  function toggleDrawer() {
+    const d = document.getElementById('drawer');
+    const h = document.getElementById('hamburger');
+    const open = d.classList.contains('open');
+    d.classList.toggle('open', !open);
+    h.classList.toggle('open', !open);
+    document.body.style.overflow = open ? '' : 'hidden';
+  }
+  function navDrawer(page) {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('hamburger').classList.remove('open');
+    document.body.style.overflow = '';
+    navigate(page);
+  }
+</script>
+</body>
+</html>
