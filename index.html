@@ -1121,16 +1121,17 @@
 </footer>
 
 <script>
-  function trackAppClick(el) {
+  function trackEvent(pageId) {
     try {
       fetch('https://vs.singularityblue.com/api/collections/SBLUE_visitor_counts/records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         keepalive: true,
-        body: JSON.stringify({ page_id: el.dataset.app, count: 1 })
+        body: JSON.stringify({ page_id: pageId, count: 1 })
       });
     } catch (e) {}
   }
+  function trackAppClick(el) { trackEvent(el.dataset.app); }
 
   const ROUTES = { home:'/', whoweare:'/who-we-are', about:'/about', products:'/products', aiapps:'/ai-apps', contact:'/contact' };
   const PATHS  = Object.fromEntries(Object.entries(ROUTES).map(([k,v])=>[v,k]));
@@ -1144,6 +1145,7 @@
     if (lnk) lnk.classList.add('active');
     if (push) window.history.pushState({page}, '', ROUTES[page]||'/');
     window.scrollTo({top:0, behavior:'instant'});
+    trackEvent(page);
   }
   function resolveCurrentPage() {
     const saved = sessionStorage.getItem('sb-redirect');
