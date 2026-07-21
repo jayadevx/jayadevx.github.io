@@ -559,12 +559,17 @@
       border-bottom: 1px solid var(--rule);
       background: var(--bg-w);
       transition: background 0.15s;
+      display: block;
+      text-decoration: none;
+      position: relative;
     }
     .app-card:hover { background: var(--bg); }
+    a.app-card:hover .app-name { color: var(--accent); }
     .app-name {
       font-size: 1.4rem; font-weight: 800;
       letter-spacing: -0.025em; color: var(--ink);
       margin-bottom: 0.3rem; line-height: 1;
+      transition: color 0.15s;
     }
     .app-stack {
       font-size: 0.58rem; font-weight: 500;
@@ -574,6 +579,11 @@
     .app-desc {
       font-size: 0.87rem; font-weight: 400;
       color: var(--ink-2); line-height: 1.7;
+    }
+    .app-launch {
+      display: inline-block; margin-top: 1rem;
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.05em; color: var(--accent);
     }
 
     /* ══════════════════════════════════════
@@ -975,31 +985,77 @@
         <div class="app-stack">DataField · LLM · MCP · Vector Store · PWA</div>
         <p class="app-desc">LLM-powered knowledge management system built on DataField. Continuously ingests, structures, and connects knowledge — surfacing insights before you think to ask. The organisational cortex, made queryable.</p>
       </div>
-      <div class="app-card">
+      <a class="app-card" href="/labs/notes/" target="_blank" rel="noopener">
         <div class="app-name">Folio</div>
         <div class="app-stack">Claude API · JSON Schema · PWA</div>
         <p class="app-desc">Equity portfolio tracker with AI narrative intelligence. Annotated holdings schema, real-time insights, investment thesis tracking. Finance meets language models.</p>
-      </div>
+        <span class="app-launch">Launch ↗</span>
+      </a>
       <div class="app-card">
         <div class="app-name">CorteX Bot</div>
         <div class="app-stack">AlphaCorteX · MCP · Telegram · LLM</div>
         <p class="app-desc">Conversational agent that queries and ingests AlphaCorteX. Ask it anything in your knowledge base, or push new knowledge in — via Telegram. The interface to your second brain.</p>
       </div>
-      <div class="app-card">
+      <a class="app-card" href="/labs/echo/" target="_blank" rel="noopener">
         <div class="app-name">ECHO</div>
         <div class="app-stack">Web Audio · PWA · OP-1 Aesthetic</div>
         <p class="app-desc">Voice recorder designed for thought capture. OP-1 aesthetic. Idea velocity matters more than feature density. The tool that thinks like the person using it.</p>
-      </div>
-      <div class="app-card">
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/drop/" target="_blank" rel="noopener">
         <div class="app-name">DROP</div>
         <div class="app-stack">WebRTC · P2P · QR Scanner</div>
         <p class="app-desc">Serverless peer-to-peer file sharing. No accounts. No uploads. Just two devices and a QR code. The shortest distance between two files.</p>
-      </div>
-      <div class="app-card">
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/laya/" target="_blank" rel="noopener">
         <div class="app-name">LAYA</div>
         <div class="app-stack">Web Audio API · PWA</div>
         <p class="app-desc">PWA rhythm sequencer built for exploration. Pattern-based, tactile, musical. Built because nothing else quite fitted.</p>
-      </div>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/vil/" target="_blank" rel="noopener">
+        <div class="app-name">VIL</div>
+        <div class="app-stack">MediaPipe · Computer Vision · Gesture Control</div>
+        <p class="app-desc">Visual Intent Layer. Hand-tracking interface that reads gesture as input. No mouse, no touch — just intent, captured through the camera.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/doc-vault/" target="_blank" rel="noopener">
+        <div class="app-name">VAULT</div>
+        <div class="app-stack">Client-side Crypto · PWA</div>
+        <p class="app-desc">Secure document viewer. Encrypted, local-first storage for the files you don't want anywhere near a server.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/totp-gen/" target="_blank" rel="noopener">
+        <div class="app-name">VAULT KEY</div>
+        <div class="app-stack">TOTP · Client-side Crypto · PWA</div>
+        <p class="app-desc">Authenticator app for one-time codes, generated and stored entirely client-side. No account, no cloud, no trust required.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/memoir/" target="_blank" rel="noopener">
+        <div class="app-name">Memoir</div>
+        <div class="app-stack">Gallery · PWA</div>
+        <p class="app-desc">A gallery for memos — visual, searchable, built for quick recall over rigid folders.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/photo2pdf/" target="_blank" rel="noopener">
+        <div class="app-name">Photo2PDF</div>
+        <div class="app-stack">Canvas API · A4 Layout · PWA</div>
+        <p class="app-desc">Turns a batch of photos into a print-ready A4 PDF layout. Point, shoot, print.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/img2pdf/" target="_blank" rel="noopener">
+        <div class="app-name">Images → PDF</div>
+        <div class="app-stack">Canvas API · PWA</div>
+        <p class="app-desc">Straightforward image-to-PDF conversion, entirely in the browser. No upload, no server round-trip.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
+      <a class="app-card" href="/labs/prompter/" target="_blank" rel="noopener">
+        <div class="app-name">Prompter</div>
+        <div class="app-stack">Web App</div>
+        <p class="app-desc">A tele-prompter for the browser. Paste your script, set the pace, present.</p>
+        <span class="app-launch">Launch ↗</span>
+      </a>
     </div>
   </div>
 </section>
