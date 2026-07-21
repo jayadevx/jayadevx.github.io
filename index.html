@@ -545,7 +545,7 @@
     .together-text strong { color: #fff; font-weight: 600; }
 
     /* ══════════════════════════════════════
-       AI APPS
+       LABS
     ══════════════════════════════════════ */
     .apps-grid {
       display: grid;
@@ -778,7 +778,7 @@
     <li><a onclick="navigate('home')"     data-page="home">Home</a></li>
     <li><a onclick="navigate('about')"    data-page="about">About</a></li>
     <li><a onclick="navigate('products')" data-page="products">Products</a></li>
-    <li><a onclick="navigate('aiapps')"   data-page="aiapps">AI Apps</a></li>
+    <li><a onclick="navigate('labs')"     data-page="labs">Labs</a></li>
   </ul>
   <div class="nav-right">
     <button class="nav-start" onclick="navigate('whoweare')">Who we are</button>
@@ -795,7 +795,7 @@
   <div class="d-item" onclick="navDrawer('whoweare')">Who we are</div>
   <div class="d-item" onclick="navDrawer('about')">About</div>
   <div class="d-item" onclick="navDrawer('products')">Products</div>
-  <div class="d-item" onclick="navDrawer('aiapps')">AI Apps</div>
+  <div class="d-item" onclick="navDrawer('labs')">Labs</div>
   <div class="d-item" onclick="navDrawer('contact')">Contact</div>
 </div>
 
@@ -974,10 +974,10 @@
   </div>
 </section>
 
-<!-- ══ AI APPS ══ -->
-<section class="page" id="aiapps">
+<!-- ══ LABS ══ -->
+<section class="page" id="labs">
   <div class="section">
-    <p class="eyebrow">AI Apps</p>
+    <p class="eyebrow">Labs</p>
     <h2 class="sec-h">Built at the edge<br>of <em>what's possible.</em></h2>
     <div class="apps-grid">
       <div class="app-card">
@@ -1133,7 +1133,7 @@
   }
   function trackAppClick(el) { trackEvent(el.dataset.app); }
 
-  const ROUTES = { home:'/', whoweare:'/who-we-are', about:'/about', products:'/products', aiapps:'/ai-apps', contact:'/contact' };
+  const ROUTES = { home:'/', whoweare:'/who-we-are', about:'/about', products:'/products', labs:'/labs', contact:'/contact' };
   const PATHS  = Object.fromEntries(Object.entries(ROUTES).map(([k,v])=>[v,k]));
 
   function navigate(page, push=true) {
