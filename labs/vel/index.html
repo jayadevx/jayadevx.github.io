@@ -718,36 +718,45 @@
     });
 
     const data = new XMLSerializer().serializeToString(clone);
-    const svgBlob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + data], { type:'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
+    // Use a base64 data URI rather than a blob: URL — Safari and some
+    // Chrome versions taint the canvas (and throw on toBlob) for SVG
+    // images loaded from blob: URLs, even same-origin.
+    const svgBase64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
+      '<?xml version="1.0" encoding="UTF-8"?>\n' + data
+    )));
     const img = new Image();
     img.onload = function(){
-      const factor = 2;
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(w * factor, 1);
-      canvas.height = Math.max(h * factor, 1);
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#0A1420';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(function(blob){
-        if(!blob){
-          setStatus('error', 'PNG export failed — try .svg instead');
-          return;
-        }
-        const pngUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = pngUrl; a.download = 'diagram.png';
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(pngUrl);
-      });
+      try {
+        const factor = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(w * factor, 1);
+        canvas.height = Math.max(h * factor, 1);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0A1420';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob){
+          if(!blob){
+            console.error('Vel PNG export: toBlob returned null');
+            setStatus('error', 'PNG export failed — try .svg instead');
+            return;
+          }
+          const pngUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = pngUrl; a.download = 'diagram.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          URL.revokeObjectURL(pngUrl);
+        });
+      } catch(err){
+        console.error('Vel PNG export failed:', err);
+        setStatus('error', 'PNG export failed — try .svg instead');
+      }
     };
-    img.onerror = function(){
-      URL.revokeObjectURL(url);
+    img.onerror = function(err){
+      console.error('Vel PNG export: image failed to load', err);
       setStatus('error', 'PNG export failed — try .svg instead');
     };
-    img.src = url;
+    img.src = svgBase64;
   });
 
   // ---- boot ----
