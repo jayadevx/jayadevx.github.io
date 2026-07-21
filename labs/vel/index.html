@@ -698,17 +698,30 @@
   pngBtn.addEventListener('click', function(){
     const svgEl = previewContent.querySelector('svg');
     if(!svgEl){ setStatus('error', 'Nothing to export yet'); return; }
-    const data = new XMLSerializer().serializeToString(svgEl);
-    const svgBlob = new Blob([data], { type:'image/svg+xml;charset=utf-8' });
+
+    let w, h;
+    if(svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width){
+      w = svgEl.viewBox.baseVal.width; h = svgEl.viewBox.baseVal.height;
+    } else {
+      const r = svgEl.getBoundingClientRect(); w = r.width; h = r.height;
+    }
+
+    // Clone so width/height/xmlns fixups don't touch the live preview.
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
+    // foreignObject HTML (mermaid node/edge labels) needs the XHTML namespace
+    // explicitly, or Image decoding of the serialized SVG fails silently.
+    clone.querySelectorAll('foreignObject > *').forEach(function(el){
+      if(!el.getAttribute('xmlns')) el.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+    });
+
+    const data = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + data], { type:'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
     const img = new Image();
     img.onload = function(){
-      let w, h;
-      if(svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width){
-        w = svgEl.viewBox.baseVal.width; h = svgEl.viewBox.baseVal.height;
-      } else {
-        const r = svgEl.getBoundingClientRect(); w = r.width; h = r.height;
-      }
       const factor = 2;
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(w * factor, 1);
@@ -719,6 +732,10 @@
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
       canvas.toBlob(function(blob){
+        if(!blob){
+          setStatus('error', 'PNG export failed — try .svg instead');
+          return;
+        }
         const pngUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = pngUrl; a.download = 'diagram.png';
