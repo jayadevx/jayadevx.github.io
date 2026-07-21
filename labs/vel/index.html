@@ -159,8 +159,32 @@
 
   /* ---------- main split ---------- */
   main{flex:1 1 auto;display:flex;min-height:0;}
-  .pane{position:relative;flex:1 1 50%;min-width:0;display:flex;flex-direction:column;}
-  .pane-editor{background:var(--panel-editor);border-right:1px solid var(--border);}
+  .pane{position:relative;min-width:0;display:flex;flex-direction:column;}
+  .pane-editor{
+    background:var(--panel-editor);
+    border-right:1px solid var(--border);
+    flex:0 0 calc(var(--split, 38.2) * 1%);
+  }
+  .resizer{
+    flex:0 0 6px;
+    position:relative;
+    background:var(--border);
+    cursor:col-resize;
+    transition:background 120ms ease;
+  }
+  .resizer:hover,
+  .resizer.dragging{background:var(--accent);}
+  .resizer:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
+  .resizer::after{
+    content:'';
+    position:absolute;
+    top:50%;left:50%;
+    width:2px;height:28px;
+    background:var(--text-faint);
+    border-radius:1px;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+  }
   .editor-wrap{flex:1;display:flex;min-height:0;}
   .line-numbers{
     flex:0 0 auto;
@@ -194,6 +218,7 @@
 
   /* ---------- preview ---------- */
   .pane-preview{
+    flex:1 1 auto;
     background-color:var(--panel-preview);
     background-image:
       linear-gradient(var(--grid-line) 1px, transparent 1px),
@@ -307,6 +332,7 @@
     main{flex-direction:column;}
     .pane-editor{border-right:none;border-bottom:1px solid var(--border);}
     .pane{flex:1 1 50%;}
+    .resizer{display:none;}
     header{gap:10px;}
     .toolbar{width:100%;justify-content:flex-start;}
     footer .hint{display:none;}
@@ -364,6 +390,8 @@
     </div>
   </section>
 
+  <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview panes" tabindex="0"></div>
+
   <section class="pane pane-preview" id="previewPane">
     <div class="reg-mark reg-tl"></div>
     <div class="reg-mark reg-tr"></div>
@@ -408,6 +436,8 @@
   const zoomOutBtn = document.getElementById('zoomOutBtn');
   const fitBtn = document.getElementById('fitBtn');
   const zoomPct = document.getElementById('zoomPct');
+  const resizer = document.getElementById('resizer');
+  const mainEl = document.querySelector('main');
   const uiThemeBtn = document.getElementById('uiThemeBtn');
   const copyBtn = document.getElementById('copyBtn');
   const svgBtn = document.getElementById('svgBtn');
@@ -546,12 +576,24 @@
     uiThemeBtn.setAttribute('aria-pressed', mode === 'light' ? 'true' : 'false');
   }
 
+  const GOLDEN_SPLIT = 38.2; // editor pane share, %; preview takes the remaining 61.8%
+
+  function getSplit(){
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--split'));
+    return isNaN(v) ? GOLDEN_SPLIT : v;
+  }
+  function setSplit(pct){
+    const clamped = Math.min(Math.max(pct, 15), 85);
+    document.documentElement.style.setProperty('--split', clamped);
+  }
+
   async function saveState(){
     try {
       await window.storage.set('vellum:state', JSON.stringify({
         code: editor.value,
         theme: themeSelect.value,
-        uiTheme: document.documentElement.getAttribute('data-theme') || 'dark'
+        uiTheme: document.documentElement.getAttribute('data-theme') || 'dark',
+        split: getSplit()
       }), false);
     } catch(err){ /* non-critical */ }
   }
@@ -659,6 +701,61 @@
     previewPane.classList.remove('panning');
   });
 
+  // ---- resizer ----
+  let isResizing = false;
+  const MIN_PANE_PX = 200;
+
+  function resizeToClientX(clientX){
+    const rect = mainEl.getBoundingClientRect();
+    const minPct = (MIN_PANE_PX / rect.width) * 100;
+    let pct = ((clientX - rect.left) / rect.width) * 100;
+    pct = Math.min(Math.max(pct, minPct), 100 - minPct);
+    setSplit(pct);
+  }
+
+  resizer.addEventListener('mousedown', function(e){
+    e.preventDefault();
+    isResizing = true;
+    resizer.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+  });
+  window.addEventListener('mousemove', function(e){
+    if(!isResizing) return;
+    resizeToClientX(e.clientX);
+  });
+  window.addEventListener('mouseup', function(){
+    if(!isResizing) return;
+    isResizing = false;
+    resizer.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    saveState();
+  });
+
+  resizer.addEventListener('touchstart', function(){
+    isResizing = true;
+    resizer.classList.add('dragging');
+  }, { passive:true });
+  window.addEventListener('touchmove', function(e){
+    if(!isResizing || !e.touches[0]) return;
+    resizeToClientX(e.touches[0].clientX);
+  }, { passive:true });
+  window.addEventListener('touchend', function(){
+    if(!isResizing) return;
+    isResizing = false;
+    resizer.classList.remove('dragging');
+    saveState();
+  });
+
+  resizer.addEventListener('dblclick', function(){
+    setSplit(GOLDEN_SPLIT);
+    saveState();
+  });
+  resizer.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); setSplit(getSplit() - 2); saveState(); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); setSplit(getSplit() + 2); saveState(); }
+    else if(e.key === 'Home'){ e.preventDefault(); setSplit(GOLDEN_SPLIT); saveState(); }
+  });
+
   // ---- ui theme toggle ----
   uiThemeBtn.addEventListener('click', function(){
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -762,6 +859,7 @@
   // ---- boot ----
   async function boot(){
     setUiTheme('dark');
+    setSplit(GOLDEN_SPLIT);
     mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" });
     let restored = false;
     try {
@@ -771,6 +869,7 @@
         if(state.code){ editor.value = state.code; restored = true; }
         if(state.theme){ themeSelect.value = state.theme; mermaid.initialize({ startOnLoad:false, theme:state.theme, securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" }); }
         if(state.uiTheme){ setUiTheme(state.uiTheme); }
+        if(typeof state.split === 'number'){ setSplit(state.split); }
       }
     } catch(err){ /* no saved state yet */ }
     if(!restored){ editor.value = examples.flowchart; }
