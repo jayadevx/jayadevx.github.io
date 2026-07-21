@@ -1146,6 +1146,13 @@
     window.scrollTo({top:0, behavior:'instant'});
   }
   function resolveCurrentPage() {
+    const saved = sessionStorage.getItem('sb-redirect');
+    if (saved) {
+      sessionStorage.removeItem('sb-redirect');
+      const path = saved.replace(/\/$/,'') || '/';
+      window.history.replaceState({}, '', path);
+      return PATHS[path] || 'home';
+    }
     const path = window.location.pathname.replace(/\/$/,'') || '/';
     return PATHS[path] || 'home';
   }

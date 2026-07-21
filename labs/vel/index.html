@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vel — diagram editor</title>
+<meta name="description" content="A diagram editor for people who think in structure. Write it, see it — text and diagram, kept in sync.">
+<link rel="canonical" href="https://singularityblue.com/labs/vel/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Vel — diagram editor">
+<meta property="og:description" content="A diagram editor for people who think in structure. Write it, see it — text and diagram, kept in sync.">
+<meta property="og:url" content="https://singularityblue.com/labs/vel/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Vel — diagram editor">
+<meta name="twitter:description" content="A diagram editor for people who think in structure. Write it, see it — text and diagram, kept in sync.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE0IiBmaWxsPSIjMEIxNjIyIi8+CjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjE1IiBmaWxsPSJub25lIiBzdHJva2U9IiNGNUE2MjMiIHN0cm9rZS13aWR0aD0iMy41Ii8+CjxsaW5lIHgxPSIzMiIgeTE9IjgiIHgyPSIzMiIgeTI9IjU2IiBzdHJva2U9IiNGNUE2MjMiIHN0cm9rZS13aWR0aD0iMy41Ii8+CjxsaW5lIHgxPSI4IiB5MT0iMzIiIHgyPSI1NiIgeTI9IjMyIiBzdHJva2U9IiNGNUE2MjMiIHN0cm9rZS13aWR0aD0iMy41Ii8+Cjwvc3ZnPg==">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1622;
+    --panel:#0F2033;
+    --panel-editor:#0D1D2E;
+    --panel-preview:#0A1420;
+    --grid-line:rgba(94,168,212,0.07);
+    --grid-line-strong:rgba(94,168,212,0.15);
+    --border:#1C3A5A;
+    --border-soft:#16293E;
+    --text:#E8EEF4;
+    --text-dim:#7A94AC;
+    --text-faint:#47607A;
+    --accent:#F5A623;
+    --accent-soft:rgba(245,166,35,0.12);
+    --cyan:#5EEAD4;
+    --error:#FF6B6B;
+    --error-soft:rgba(255,107,107,0.1);
+    --font-display:'IBM Plex Mono',monospace;
+    --font-body:'IBM Plex Sans',sans-serif;
+    --font-code:'JetBrains Mono','IBM Plex Mono',monospace;
+    --shadow:rgba(0,0,0,0.35);
+  }
+  /* Light mode: actual vellum — the warm, translucent drafting paper technical
+     drawings were traditionally inked on before being copied into blueprints. */
+  [data-theme="light"]{
+    --bg:#F2EAD6;
+    --panel:#EAE0C4;
+    --panel-editor:#F0E7CE;
+    --panel-preview:#F6EFDC;
+    --grid-line:rgba(66,52,26,0.05);
+    --grid-line-strong:rgba(66,52,26,0.12);
+    --border:#C7B88F;
+    --border-soft:#D9CCA0;
+    --text:#2A2113;
+    --text-dim:#6B5A3A;
+    --text-faint:#9C8B62;
+    --accent:#3D5A96;
+    --accent-soft:rgba(61,90,150,0.12);
+    --cyan:#2F6E62;
+    --error:#B23A3A;
+    --error-soft:rgba(178,58,58,0.08);
+    --shadow:rgba(60,50,20,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  ::selection{background:var(--accent-soft);color:var(--accent);}
+
+  /* ---------- header ---------- */
+  header{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    padding:12px 18px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand h1{
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--text);
+  }
+  .brand h1 span{color:var(--accent);}
+  .brand small{
+    font-family:var(--font-body);
+    font-size:11px;
+    color:var(--text-faint);
+    letter-spacing:0.02em;
+  }
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .field{display:flex;align-items:center;gap:6px;}
+  .field label{
+    font-family:var(--font-display);
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  select{
+    background:var(--panel-editor);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:6px 8px;
+    font-family:var(--font-body);
+    font-size:12px;
+    cursor:pointer;
+  }
+  select:hover{border-color:var(--text-dim);}
+  select:focus-visible, button:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:1px;
+  }
+  button{
+    background:var(--panel-editor);
+    color:var(--text-dim);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:6px 10px;
+    font-family:var(--font-display);
+    font-size:11px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:border-color 120ms ease, color 120ms ease;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  button:hover{border-color:var(--accent);color:var(--text);}
+  button.primary{border-color:var(--accent);color:var(--accent);}
+  button.primary:hover{background:var(--accent-soft);}
+  .zoom-group{display:flex;align-items:center;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+  .zoom-group button{border:none;border-radius:0;border-right:1px solid var(--border);padding:6px 9px;}
+  .zoom-group button:last-child{border-right:none;}
+  .zoom-pct{
+    font-family:var(--font-display);
+    font-size:11px;
+    color:var(--text-dim);
+    padding:0 8px;
+    min-width:42px;
+    text-align:center;
+  }
+
+  /* ---------- main split ---------- */
+  main{flex:1 1 auto;display:flex;min-height:0;}
+  .pane{position:relative;flex:1 1 50%;min-width:0;display:flex;flex-direction:column;}
+  .pane-editor{background:var(--panel-editor);border-right:1px solid var(--border);}
+  .editor-wrap{flex:1;display:flex;min-height:0;}
+  .line-numbers{
+    flex:0 0 auto;
+    padding:16px 10px 16px 14px;
+    font-family:var(--font-code);
+    font-size:13px;
+    line-height:1.65;
+    color:var(--text-faint);
+    text-align:right;
+    white-space:pre;
+    overflow:hidden;
+    user-select:none;
+    border-right:1px solid var(--border-soft);
+    background:var(--panel-editor);
+  }
+  textarea{
+    flex:1;
+    resize:none;
+    border:none;
+    background:transparent;
+    color:var(--text);
+    font-family:var(--font-code);
+    font-size:13px;
+    line-height:1.65;
+    padding:16px 18px;
+    tab-size:2;
+    white-space:pre;
+    overflow:auto;
+  }
+  textarea:focus{outline:none;}
+
+  /* ---------- preview ---------- */
+  .pane-preview{
+    background-color:var(--panel-preview);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(var(--grid-line-strong) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line-strong) 1px, transparent 1px);
+    background-size:16px 16px, 16px 16px, 80px 80px, 80px 80px;
+    overflow:hidden;
+    cursor:grab;
+    user-select:none;
+  }
+  .pane-preview.panning{cursor:grabbing;}
+  .preview-stage{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .preview-content{
+    transition:opacity 150ms ease;
+    transform-origin:center center;
+  }
+  .preview-content svg{
+    max-width:none !important;
+    display:block;
+  }
+  .reg-mark{
+    position:absolute;
+    width:18px;height:18px;
+    border:1px solid var(--text-faint);
+    border-radius:50%;
+    pointer-events:none;
+    opacity:0.55;
+  }
+  .reg-mark::before,.reg-mark::after{content:'';position:absolute;background:var(--text-faint);}
+  .reg-mark::before{width:100%;height:1px;top:50%;left:0;}
+  .reg-mark::after{width:1px;height:100%;left:50%;top:0;}
+  .reg-tl{top:14px;left:14px;}
+  .reg-tr{top:14px;right:14px;}
+  .reg-bl{bottom:14px;left:14px;}
+  .reg-br{bottom:14px;right:14px;}
+
+  .empty-state{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    pointer-events:none;
+  }
+
+  .error-banner{
+    position:absolute;
+    left:16px;right:16px;bottom:16px;
+    background:var(--panel);
+    border:1px solid var(--error);
+    border-left:3px solid var(--error);
+    border-radius:3px;
+    padding:10px 14px;
+    font-family:var(--font-code);
+    font-size:12px;
+    color:var(--error);
+    max-height:120px;
+    overflow:auto;
+    display:none;
+    box-shadow:0 8px 24px var(--shadow);
+  }
+  .error-banner.show{display:block;}
+  .error-banner .label{
+    font-family:var(--font-display);
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--error);
+    display:block;
+    margin-bottom:4px;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 18px;
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    font-family:var(--font-display);
+    font-size:10.5px;
+    letter-spacing:0.03em;
+    color:var(--text-faint);
+  }
+  .status{display:flex;align-items:center;gap:6px;}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint);}
+  .status-dot.ok{background:var(--cyan);}
+  .status-dot.error{background:var(--error);}
+  .status-text{color:var(--text-dim);}
+  .hint{color:var(--text-faint);}
+  .hint kbd{
+    background:var(--panel-editor);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:1px 4px;
+    font-family:var(--font-display);
+  }
+
+  @media (max-width:760px){
+    main{flex-direction:column;}
+    .pane-editor{border-right:none;border-bottom:1px solid var(--border);}
+    .pane{flex:1 1 50%;}
+    header{gap:10px;}
+    .toolbar{width:100%;justify-content:flex-start;}
+    footer .hint{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Ve<span>l</span></h1>
+    <small>diagrams, plotted from text</small>
+  </div>
+  <div class="toolbar">
+    <div class="field">
+      <label for="exampleSelect">Template</label>
+      <select id="exampleSelect">
+        <option value="flowchart">Flowchart</option>
+        <option value="sequence">Sequence</option>
+        <option value="class">Class</option>
+        <option value="state">State</option>
+        <option value="er">Entity relation</option>
+        <option value="gantt">Gantt</option>
+        <option value="pie">Pie</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="themeSelect">Theme</label>
+      <select id="themeSelect">
+        <option value="dark" selected>Dark</option>
+        <option value="default">Default</option>
+        <option value="neutral">Neutral</option>
+        <option value="forest">Forest</option>
+        <option value="base">Base</option>
+      </select>
+    </div>
+    <div class="zoom-group">
+      <button id="zoomOutBtn" title="Zoom out">–</button>
+      <span class="zoom-pct" id="zoomPct">100%</span>
+      <button id="zoomInBtn" title="Zoom in">+</button>
+      <button id="fitBtn" title="Fit to pane">Fit</button>
+    </div>
+    <button id="uiThemeBtn" title="Toggle light/dark interface">☀ Light</button>
+    <button id="copyBtn" title="Copy source">Copy</button>
+    <button id="svgBtn" title="Download SVG">.svg</button>
+    <button id="pngBtn" class="primary" title="Download PNG">.png</button>
+  </div>
+</header>
+
+<main>
+  <section class="pane pane-editor">
+    <div class="editor-wrap">
+      <div class="line-numbers" id="lineNumbers">1</div>
+      <textarea id="editor" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"></textarea>
+    </div>
+  </section>
+
+  <section class="pane pane-preview" id="previewPane">
+    <div class="reg-mark reg-tl"></div>
+    <div class="reg-mark reg-tr"></div>
+    <div class="reg-mark reg-bl"></div>
+    <div class="reg-mark reg-br"></div>
+    <div class="preview-stage">
+      <div class="preview-content" id="previewContent"></div>
+    </div>
+    <div class="empty-state" id="emptyState">start typing to plot a diagram</div>
+    <div class="error-banner" id="errorBanner">
+      <span class="label">Syntax error</span>
+      <span id="errorText"></span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="status">
+    <span class="status-dot" id="statusDot"></span>
+    <span class="status-text" id="statusText">Idle</span>
+    <span id="counts" style="margin-left:10px;"></span>
+  </div>
+  <div class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> render now &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; drag to pan</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"></script>
+<script>
+(function(){
+  const editor = document.getElementById('editor');
+  const lineNumbers = document.getElementById('lineNumbers');
+  const previewPane = document.getElementById('previewPane');
+  const previewContent = document.getElementById('previewContent');
+  const emptyState = document.getElementById('emptyState');
+  const errorBanner = document.getElementById('errorBanner');
+  const errorText = document.getElementById('errorText');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const counts = document.getElementById('counts');
+  const exampleSelect = document.getElementById('exampleSelect');
+  const themeSelect = document.getElementById('themeSelect');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+  const fitBtn = document.getElementById('fitBtn');
+  const zoomPct = document.getElementById('zoomPct');
+  const uiThemeBtn = document.getElementById('uiThemeBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const svgBtn = document.getElementById('svgBtn');
+  const pngBtn = document.getElementById('pngBtn');
+
+  const examples = {
+    flowchart:
+`flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Do the thing]
+    B -->|No| D[Skip it]
+    C --> E[Ship it]
+    D --> E
+    E --> F[End]`,
+    sequence:
+`sequenceDiagram
+    participant U as User
+    participant A as API
+    participant D as Database
+    U->>A: Request data
+    A->>D: Query
+    D-->>A: Rows
+    A-->>U: JSON response`,
+    class:
+`classDiagram
+    class DiagramEditor {
+        +String code
+        +String theme
+        +render()
+        +export()
+    }
+    class Renderer {
+        +parse(code)
+        +toSVG()
+    }
+    DiagramEditor --> Renderer : uses`,
+    state:
+`stateDiagram-v2
+    [*] --> Idle
+    Idle --> Editing : type
+    Editing --> Rendering : pause
+    Rendering --> Idle : success
+    Rendering --> Error : syntax issue
+    Error --> Editing : fix`,
+    er:
+`erDiagram
+    USER ||--o{ DIAGRAM : creates
+    DIAGRAM ||--|{ NODE : contains
+    USER {
+        string name
+        string email
+    }
+    DIAGRAM {
+        string title
+        string theme
+    }`,
+    gantt:
+`gantt
+    title Build Plan
+    dateFormat YYYY-MM-DD
+    section Design
+    Token system      :done, des1, 2026-07-01, 3d
+    Layout pass        :active, des2, after des1, 4d
+    section Build
+    Editor pane        :b1, after des2, 3d
+    Preview pane        :b2, after b1, 3d
+    section Ship
+    QA and polish       :c1, after b2, 2d`,
+    pie:
+`pie title Diagram types used
+    "Flowchart" : 42
+    "Sequence" : 28
+    "ER" : 15
+    "State" : 10
+    "Other" : 5`
+  };
+
+  let renderId = 0;
+  let debounceTimer = null;
+  let scale = 1, panX = 0, panY = 0, isPanning = false, startX = 0, startY = 0;
+
+  function applyTransform(){
+    previewContent.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
+    zoomPct.textContent = Math.round(scale * 100) + '%';
+  }
+
+  function updateLineNumbers(){
+    const n = editor.value.split('\n').length;
+    let out = '';
+    for(let i = 1; i <= n; i++) out += i + '\n';
+    lineNumbers.textContent = out;
+  }
+
+  function updateCounts(){
+    const lines = editor.value.split('\n').length;
+    const chars = editor.value.length;
+    counts.textContent = lines + ' lines · ' + chars + ' chars';
+  }
+
+  function setStatus(kind, msg){
+    statusDot.className = 'status-dot' + (kind === 'ok' ? ' ok' : kind === 'error' ? ' error' : '');
+    statusText.textContent = msg;
+    if(kind === 'error'){
+      errorText.textContent = msg;
+      errorBanner.classList.add('show');
+    } else {
+      errorBanner.classList.remove('show');
+    }
+  }
+
+  function autoFit(){
+    const svgEl = previewContent.querySelector('svg');
+    if(!svgEl) return;
+    const paneRect = previewPane.getBoundingClientRect();
+    let w, h;
+    if(svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width){
+      w = svgEl.viewBox.baseVal.width;
+      h = svgEl.viewBox.baseVal.height;
+    } else {
+      const r = svgEl.getBoundingClientRect();
+      w = r.width; h = r.height;
+    }
+    if(!w || !h) return;
+    const padding = 72;
+    const availW = paneRect.width - padding;
+    const availH = paneRect.height - padding;
+    const fitScale = Math.min(availW / w, availH / h, 1.6);
+    scale = Math.max(fitScale, 0.15);
+    panX = 0; panY = 0;
+    applyTransform();
+  }
+
+  function setUiTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    uiThemeBtn.textContent = mode === 'dark' ? '☀ Light' : '☾ Dark';
+    uiThemeBtn.setAttribute('aria-pressed', mode === 'light' ? 'true' : 'false');
+  }
+
+  async function saveState(){
+    try {
+      await window.storage.set('vellum:state', JSON.stringify({
+        code: editor.value,
+        theme: themeSelect.value,
+        uiTheme: document.documentElement.getAttribute('data-theme') || 'dark'
+      }), false);
+    } catch(err){ /* non-critical */ }
+  }
+
+  async function renderDiagram(resetView){
+    const code = editor.value.trim();
+    updateCounts();
+    if(!code){
+      previewContent.innerHTML = '';
+      emptyState.style.display = 'flex';
+      setStatus('idle', 'Idle');
+      saveState();
+      return;
+    }
+    emptyState.style.display = 'none';
+    const id = 'vellum-graph-' + (renderId++);
+    try {
+      const result = await mermaid.render(id, code);
+      previewContent.style.opacity = '0';
+      previewContent.innerHTML = result.svg;
+      requestAnimationFrame(function(){
+        previewContent.style.opacity = '1';
+        if(resetView) autoFit(); else applyTransform();
+      });
+      setStatus('ok', 'Rendered');
+    } catch(err){
+      const orphan = document.getElementById(id);
+      if(orphan && orphan.parentElement) orphan.parentElement.removeChild(orphan);
+      const msg = (err && err.message ? err.message.split('\n')[0] : 'Could not parse this diagram');
+      setStatus('error', msg);
+    }
+    saveState();
+  }
+
+  function scheduleRender(resetView){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function(){ renderDiagram(!!resetView); }, 450);
+  }
+
+  // ---- editor events ----
+  editor.addEventListener('input', function(){
+    updateLineNumbers();
+    scheduleRender(false);
+  });
+  editor.addEventListener('scroll', function(){
+    lineNumbers.scrollTop = editor.scrollTop;
+  });
+  editor.addEventListener('keydown', function(e){
+    if((e.metaKey || e.ctrlKey) && e.key === 'Enter'){
+      e.preventDefault();
+      clearTimeout(debounceTimer);
+      renderDiagram(false);
+    } else if(e.key === 'Tab'){
+      e.preventDefault();
+      const start = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.slice(0, start) + '  ' + editor.value.slice(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+      updateLineNumbers();
+      scheduleRender(false);
+    }
+  });
+
+  // ---- template + theme selects ----
+  exampleSelect.addEventListener('change', function(){
+    const key = exampleSelect.value;
+    if(examples[key]){
+      editor.value = examples[key];
+      updateLineNumbers();
+      clearTimeout(debounceTimer);
+      renderDiagram(true);
+    }
+  });
+  themeSelect.addEventListener('change', function(){
+    mermaid.initialize({ startOnLoad:false, theme: themeSelect.value, securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" });
+    clearTimeout(debounceTimer);
+    renderDiagram(true);
+  });
+
+  // ---- zoom + pan ----
+  zoomInBtn.addEventListener('click', function(){ scale = Math.min(scale * 1.2, 5); applyTransform(); });
+  zoomOutBtn.addEventListener('click', function(){ scale = Math.max(scale / 1.2, 0.15); applyTransform(); });
+  fitBtn.addEventListener('click', autoFit);
+
+  previewPane.addEventListener('wheel', function(e){
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.15), 5);
+    applyTransform();
+  }, { passive:false });
+
+  previewPane.addEventListener('mousedown', function(e){
+    isPanning = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+    previewPane.classList.add('panning');
+  });
+  window.addEventListener('mousemove', function(e){
+    if(!isPanning) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    applyTransform();
+  });
+  window.addEventListener('mouseup', function(){
+    isPanning = false;
+    previewPane.classList.remove('panning');
+  });
+
+  // ---- ui theme toggle ----
+  uiThemeBtn.addEventListener('click', function(){
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    setUiTheme(next);
+    const nextMermaidTheme = next === 'dark' ? 'dark' : 'default';
+    themeSelect.value = nextMermaidTheme;
+    mermaid.initialize({ startOnLoad:false, theme: nextMermaidTheme, securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" });
+    clearTimeout(debounceTimer);
+    renderDiagram(true);
+  });
+
+  // ---- copy / export ----
+  copyBtn.addEventListener('click', async function(){
+    try {
+      await navigator.clipboard.writeText(editor.value);
+      const prev = statusText.textContent;
+      setStatus('ok', 'Copied to clipboard');
+      setTimeout(function(){ setStatus('ok', prev); }, 1400);
+    } catch(err){
+      setStatus('error', 'Copy failed — select and copy manually');
+    }
+  });
+
+  svgBtn.addEventListener('click', function(){
+    const svgEl = previewContent.querySelector('svg');
+    if(!svgEl){ setStatus('error', 'Nothing to export yet'); return; }
+    const data = new XMLSerializer().serializeToString(svgEl);
+    const blob = new Blob([data], { type:'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'diagram.svg';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  pngBtn.addEventListener('click', function(){
+    const svgEl = previewContent.querySelector('svg');
+    if(!svgEl){ setStatus('error', 'Nothing to export yet'); return; }
+    const data = new XMLSerializer().serializeToString(svgEl);
+    const svgBlob = new Blob([data], { type:'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = function(){
+      let w, h;
+      if(svgEl.viewBox && svgEl.viewBox.baseVal && svgEl.viewBox.baseVal.width){
+        w = svgEl.viewBox.baseVal.width; h = svgEl.viewBox.baseVal.height;
+      } else {
+        const r = svgEl.getBoundingClientRect(); w = r.width; h = r.height;
+      }
+      const factor = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(w * factor, 1);
+      canvas.height = Math.max(h * factor, 1);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0A1420';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function(blob){
+        const pngUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = pngUrl; a.download = 'diagram.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(pngUrl);
+      });
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      setStatus('error', 'PNG export failed — try .svg instead');
+    };
+    img.src = url;
+  });
+
+  // ---- boot ----
+  async function boot(){
+    setUiTheme('dark');
+    mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" });
+    let restored = false;
+    try {
+      const result = await window.storage.get('vellum:state');
+      if(result && result.value){
+        const state = JSON.parse(result.value);
+        if(state.code){ editor.value = state.code; restored = true; }
+        if(state.theme){ themeSelect.value = state.theme; mermaid.initialize({ startOnLoad:false, theme:state.theme, securityLevel:'loose', fontFamily:"IBM Plex Mono, monospace" }); }
+        if(state.uiTheme){ setUiTheme(state.uiTheme); }
+      }
+    } catch(err){ /* no saved state yet */ }
+    if(!restored){ editor.value = examples.flowchart; }
+    updateLineNumbers();
+    updateCounts();
+    applyTransform();
+    renderDiagram(true);
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
